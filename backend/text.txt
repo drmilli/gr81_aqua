@@ -1,0 +1,47 @@
+Recommended checks
+
+Health:
+GET http://localhost:5000/health
+Auth:
+POST http://localhost:5000/api/auth/register
+POST http://localhost:5000/api/auth/login
+Authenticated:
+GET http://localhost:5000/api/users/me with Authorization: Bearer
+GET/POST http://localhost:5000/api/profiles (Bearer token)
+Content:
+GET http://localhost:5000/api/movies
+GET http://localhost:5000/api/series
+GET http://localhost:5000/api/tv
+My List:
+GET/POST/DELETE http://localhost:5000/api/mylist (Bearer token)
+Providers/ingestion:
+POST http://localhost:5000/api/providers { code, name, m3uUrl?, xmltvUrl? }
+POST http://localhost:5000/api/providers/:id/ingest/m3u
+POST http://localhost:5000/api/providers/:id/ingest/xmltv
+EPG:
+GET http://localhost:5000/api/epg?channelId=&from=&to=
+GET http://localhost:5000/api/epg/nownext?channelId=
+Payments (stubs with live signature verification supported):
+POST http://localhost:5000/api/payments/stripe/checkout
+POST http://localhost:5000/api/payments/stripe/webhook
+POST http://localhost:5000/api/payments/paystack/webhook
+Note: Webhook routes expect raw body and signatures when secrets are set.
+Quick setup to test faster
+
+Seed demo data:
+npm run db:migrate
+npm run seed:demo
+Create admin and get JWT:
+node scripts/seedAdmin.js
+Copy the printed ADMIN_JWT and use it for admin routes:
+Authorization: Bearer <ADMIN_JWT>
+Admin content endpoints: /api/admin/content/...
+If you want, I can proceed to:
+
+Add Sequelize migration FK constraints and optional indexes.
+Add validation/rate-limits to the remaining routes for tighter control.
+Wire real Stripe Checkout session creation (not just placeholder URL).
+Provide a short Postman collection to exercise all endpoints.
+
+Created admin user: admin@smartprime8k.local
+ADMIN_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFjOWU0NTFmLWZhZmMtNGY3ZS04Mzg5LWU3NDZjMWRhNTMzYiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1ODkzMzE4NywiZXhwIjoxNzU5NTM3OTg3fQ.ACkY_ob1W__qwrZvwIYD0dYCVakpo9gCwXrTyjeOjPM

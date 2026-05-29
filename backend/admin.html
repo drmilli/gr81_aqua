@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GR81 Aqua Admin</title>
+  <style>
+    :root {
+      --bg:      #030912;
+      --panel:   #07101e;
+      --card:    #0c1e38;
+      --cardAlt: #091628;
+      --border:  #17304e;
+      --text:    #e8f4ff;
+      --sub:     #7aaac8;
+      --muted:   #3a5878;
+      --cyan:    #00b8cc;
+      --cyanDim: rgba(0,184,204,0.15);
+      --danger:  #ff6b6b;
+      --ok:      #2ecc71;
+      --warn:    #f39c12;
+      --shadow:  rgba(0,0,0,0.4);
+      --radius:  10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+    /* ── Login ── */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #030912 0%, #071830 60%, #0a2040 100%);
+    }
+    .loginBox {
+      width: min(420px, 90vw);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 36px; box-shadow: 0 24px 60px var(--shadow);
+    }
+    .loginLogo { text-align: center; margin-bottom: 24px; }
+    .loginLogo .brand { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; }
+    .loginLogo .brand span { color: var(--cyan); }
+    .loginLogo .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .loginBox label { display: block; color: var(--sub); font-size: 11px; margin-bottom: 5px; }
+    .loginBox input {
+      width: 100%; background: var(--cardAlt); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 11px 14px; color: var(--text);
+      outline: none; margin-bottom: 14px;
+    }
+    .loginBox input:focus { border-color: var(--cyan); }
+    #loginErr { color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none; }
+
+    /* ── Layout ── */
+    #app { display: none; height: 100vh; flex-direction: row; }
+    #app.visible { display: flex; }
+
+    /* Sidebar */
+    #sidebar {
+      width: 220px; flex-shrink: 0;
+      background: var(--panel); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 20px 12px;
+    }
+    .sidebarBrand { padding: 0 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .sidebarBrand .name { font-size: 15px; font-weight: 900; }
+    .sidebarBrand .name span { color: var(--cyan); }
+    .sidebarBrand .tag { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .navItem {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius);
+      color: var(--muted); cursor: pointer; border: 1px solid transparent;
+      margin-bottom: 3px; font-weight: 600; transition: all 0.15s;
+    }
+    .navItem:hover { background: var(--cardAlt); color: var(--text); }
+    .navItem.active { background: var(--cyanDim); border-color: var(--cyan); color: var(--cyan); }
+    .navIcon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebarBottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 14px; }
+    .connBadge { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .dot.bad { background: var(--danger); }
+    .connLabel { color: var(--sub); font-size: 11px; }
+
+    /* Main */
+    #main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* Topbar */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; border-bottom: 1px solid var(--border);
+      background: var(--panel); flex-shrink: 0; gap: 12px;
+    }
+    .topbar h1 { font-size: 16px; font-weight: 800; }
+    .topbar-right { display: flex; gap: 8px; align-items: center; }
+
+    /* Content area */
+    .content { padding: 20px 24px; flex: 1; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius);
+      font-weight: 700; cursor: pointer; border: 0; font-size: 12px;
+      transition: opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-cyan    { background: var(--cyan); color: #001a1f; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger  { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+    .btn-ok      { background: transparent; border: 1px solid var(--ok); color: var(--ok); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+    /* KPI grid */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .kpi {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+    }
+    .kpi-label { color: var(--sub); font-size: 11px; margin-bottom: 8px; }
+    .kpi-value { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+    .kpi-hint  { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .kpi-cyan   { border-color: rgba(0,184,204,0.3); }
+    .kpi-ok     { border-color: rgba(46,204,113,0.3); }
+    .kpi-warn   { border-color: rgba(243,156,18,0.3); }
+    .kpi-danger { border-color: rgba(255,107,107,0.3); }
+
+    /* Card */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 16px;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+    }
+    .card-head h2 { font-size: 14px; font-weight: 700; }
+    .card-body { padding: 16px; }
+
+    /* Table */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; color: var(--muted); font-size: 11px; font-weight: 700; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .mono { font-family: ui-monospace, monospace; font-size: 11px; color: var(--sub); }
+
+    /* Badge */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-cyan    { background: var(--cyanDim); color: var(--cyan); border: 1px solid rgba(0,184,204,0.3); }
+    .badge-ok      { background: rgba(46,204,113,0.12); color: var(--ok); border: 1px solid rgba(46,204,113,0.3); }
+    .badge-danger  { background: rgba(255,107,107,0.12); color: var(--danger); border: 1px solid rgba(255,107,107,0.3); }
+    .badge-warn    { background: rgba(243,156,18,0.12); color: var(--warn); border: 1px solid rgba(243,156,18,0.3); }
+    .badge-muted   { background: var(--cardAlt); color: var(--muted); border: 1px solid var(--border); }
+
+    /* Actions row */
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Search bar */
+    .search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .search-row input, .search-row select {
+      background: var(--cardAlt); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 8px 12px; color: var(--text); outline: none;
+    }
+    .search-row input:focus, .search-row select:focus { border-color: var(--cyan); }
+    .search-row input { flex: 1; min-width: 200px; }
+
+    /* Modal */
+    .modal-wrap {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-wrap.open { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; width: min(520px, 100%); max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 24px 60px var(--shadow);
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--card); z-index: 1;
+    }
+    .modal-head h2 { font-size: 14px; font-weight: 800; }
+    .modal-body { padding: 20px; }
+    .modal-foot {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 14px 20px; border-top: 1px solid var(--border);
+    }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; color: var(--sub); font-size: 11px; margin-bottom: 5px; }
+    .field input, .field select, .field textarea {
+      width: 100%; background: var(--cardAlt); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px; color: var(--text); outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--cyan); }
+    .field textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .form-err { color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none; }
+    .form-ok  { color: var(--ok);     font-size: 12px; margin-bottom: 10px; display: none; }
+
+    /* Toast */
+    .toast {
+      position: fixed; right: 16px; bottom: 16px; z-index: 9000;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 16px;
+      box-shadow: 0 12px 40px var(--shadow); display: none; min-width: 240px;
+    }
+    .toast-title { font-weight: 800; margin-bottom: 3px; }
+    .toast-msg   { color: var(--sub); font-size: 12px; }
+
+    /* Misc */
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+    .loading { text-align: center; color: var(--muted); padding: 24px 0; }
+    .err-msg { color: var(--danger); font-size: 12px; padding: 8px 0; }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .flex { display: flex; align-items: center; gap: 8px; }
+    .text-cyan { color: var(--cyan); }
+    .text-ok   { color: var(--ok); }
+    .text-danger { color: var(--danger); }
+    .fw { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="loginBox">
+    <div class="loginLogo">
+      <div class="brand">GR81 <span>AQUA</span></div>
+      <div class="sub">Admin Panel</div>
+    </div>
+    <div id="loginErr"></div>
+    <label>Backend URL</label>
+    <input id="lBase" placeholder="https://your-backend.com" />
+    <label>Email / Username</label>
+    <input id="lEmail" placeholder="admin@gr81aqua.local" autocomplete="username" />
+    <label>Password</label>
+    <input id="lPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <button class="btn btn-cyan" id="lBtn" style="width:100%;justify-content:center;margin-top:4px;">Sign In</button>
+  </div>
+</div>
+
+<!-- ═══════════════ APP SHELL ═══════════════ -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebarBrand">
+      <div class="name">GR81 <span>AQUA</span></div>
+      <div class="tag">Admin Panel</div>
+    </div>
+
+    <div class="navItem active" data-section="dashboard">
+      <span class="navIcon">⬛</span> Dashboard
+    </div>
+    <div class="navItem" data-section="users">
+      <span class="navIcon">👤</span> Users
+    </div>
+    <div class="navItem" data-section="servers">
+      <span class="navIcon">🖥</span> Servers
+    </div>
+    <div class="navItem" data-section="devices">
+      <span class="navIcon">📱</span> Devices
+    </div>
+    <div class="navItem" data-section="activity">
+      <span class="navIcon">📋</span> Activity
+    </div>
+
+    <div class="sidebarBottom">
+      <div class="connBadge">
+        <div class="dot" id="connDot"></div>
+        <span class="connLabel" id="connLabel">Not connected</span>
+      </div>
+      <button class="btn btn-outline btn-sm" id="btnLogout" style="width:100%;margin-top:8px;justify-content:center;">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="topbar-right">
+        <button class="btn btn-outline btn-sm" id="btnRefreshTop">↻ Refresh</button>
+        <span id="adminLabel" style="color:var(--muted);font-size:11px;"></span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ─── DASHBOARD ─── -->
+      <div class="section active" id="s-dashboard">
+        <div class="kpis" id="kpiGrid">
+          <div class="kpi kpi-cyan"><div class="kpi-label">Total Users</div><div class="kpi-value" id="kUsers">—</div><div class="kpi-hint">All accounts</div></div>
+          <div class="kpi kpi-ok"><div class="kpi-label">Active Devices</div><div class="kpi-value" id="kActive">—</div><div class="kpi-hint">Allowed access</div></div>
+          <div class="kpi kpi-warn"><div class="kpi-label">On Trial</div><div class="kpi-value" id="kTrial">—</div><div class="kpi-hint">7-day trial</div></div>
+          <div class="kpi kpi-cyan"><div class="kpi-label">Paid</div><div class="kpi-value" id="kPaid">—</div><div class="kpi-hint">Yearly + Lifetime</div></div>
+          <div class="kpi"><div class="kpi-label">Total Devices</div><div class="kpi-value" id="kDevices">—</div><div class="kpi-hint">All seen</div></div>
+          <div class="kpi"><div class="kpi-label">Servers</div><div class="kpi-value" id="kServers">—</div><div class="kpi-hint">IPTV providers</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="card">
+            <div class="card-head"><h2>Recent Users</h2><button class="btn btn-outline btn-sm" onclick="gotoSection('users')">View all</button></div>
+            <div class="card-body">
+              <div class="tbl-wrap">
+                <table>
+                  <thead><tr><th>Email</th><th>Role</th><th>Server</th><th>Joined</th></tr></thead>
+                  <tbody id="dashUsers"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Recent Devices</h2><button class="btn btn-outline btn-sm" onclick="gotoSection('devices')">View all</button></div>
+            <div class="card-body">
+              <div class="tbl-wrap">
+                <table>
+                  <thead><tr><th>Device ID</th><th>Plan</th><th>Status</th><th>Last Seen</th></tr></thead>
+                  <tbody id="dashDevices"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── USERS ─── -->
+      <div class="section" id="s-users">
+        <div class="card">
+          <div class="card-head">
+            <h2>Users</h2>
+            <button class="btn btn-cyan btn-sm" id="btnNewUser">+ New User</button>
+          </div>
+          <div class="card-body">
+            <div class="search-row">
+              <input id="userSearch" placeholder="Search email or name…" />
+              <select id="userRoleFilter">
+                <option value="">All roles</option>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="provider_admin">Provider Admin</option>
+              </select>
+              <button class="btn btn-outline btn-sm" id="btnUserSearch">Search</button>
+            </div>
+            <div class="err-msg" id="userErr"></div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Server</th><th>Created</th><th>Actions</th></tr></thead>
+                <tbody id="userRows"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SERVERS ─── -->
+      <div class="section" id="s-servers">
+        <div class="card">
+          <div class="card-head">
+            <h2>IPTV Servers / Providers</h2>
+            <button class="btn btn-cyan btn-sm" id="btnNewServer">+ Add Server</button>
+          </div>
+          <div class="card-body">
+            <div class="err-msg" id="serverErr"></div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Code</th><th>Type</th><th>M3U URL</th><th>Xtream URL</th><th>EPG</th><th>Actions</th></tr></thead>
+                <tbody id="serverRows"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── DEVICES ─── -->
+      <div class="section" id="s-devices">
+        <div class="card">
+          <div class="card-head">
+            <h2>Device Licenses</h2>
+          </div>
+          <div class="card-body">
+            <div class="search-row">
+              <input id="devSearch" placeholder="Search device ID…" />
+              <select id="devPlanFilter">
+                <option value="">All plans</option>
+                <option value="trial">Trial</option>
+                <option value="yearly">Yearly</option>
+                <option value="lifetime">Lifetime</option>
+              </select>
+              <select id="devStatusFilter">
+                <option value="">All status</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+                <option value="revoked">Revoked</option>
+              </select>
+              <button class="btn btn-outline btn-sm" id="btnDevSearch">Search</button>
+            </div>
+            <div class="err-msg" id="devErr"></div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Device ID</th><th>Platform</th><th>Plan</th><th>Status</th><th>Trial Ends</th><th>Paid Until</th><th>Last Seen</th><th>Actions</th></tr></thead>
+                <tbody id="devRows"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ACTIVITY ─── -->
+      <div class="section" id="s-activity">
+        <div class="card">
+          <div class="card-head">
+            <h2>Device Activity Log</h2>
+            <button class="btn btn-outline btn-sm" id="btnRefreshActivity">↻ Refresh</button>
+          </div>
+          <div class="card-body">
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Device ID</th><th>Platform</th><th>Plan</th><th>Status</th><th>First Seen</th><th>Last Check-in</th><th>Allowed</th></tr></thead>
+                <tbody id="activityRows"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ USER MODAL ═══ -->
+<div class="modal-wrap" id="userModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="userModalTitle">New User</h2>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('userModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="userModalErr"></div>
+      <div class="form-ok"  id="userModalOk"></div>
+      <input type="hidden" id="uId" />
+      <div class="field-row">
+        <div class="field">
+          <label>Email *</label>
+          <input id="uEmail" placeholder="user@example.com" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Name</label>
+          <input id="uName" placeholder="Full name" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Password <span id="uPassHint" style="color:var(--muted);">(required)</span></label>
+          <input id="uPass" type="password" placeholder="Min 6 characters" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="uRole">
+            <option value="user">User</option>
+            <option value="provider_admin">Provider Admin</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Assign Server</label>
+        <select id="uProvider">
+          <option value="">— No server assigned —</option>
+        </select>
+        <div class="field-hint">The user's app will load content from this server.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn btn-cyan" id="uSaveBtn">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SERVER MODAL ═══ -->
+<div class="modal-wrap" id="serverModal">
+  <div class="modal" style="width:min(600px,100%)">
+    <div class="modal-head">
+      <h2 id="serverModalTitle">Add Server</h2>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('serverModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="serverModalErr"></div>
+      <input type="hidden" id="sId" />
+
+      <!-- Basic info -->
+      <div class="field">
+        <label>Server Name *</label>
+        <input id="sName" placeholder="e.g. Main IPTV Server" />
+        <div class="field-hint">A friendly name for this server. Shown to users in the app.</div>
+      </div>
+      <input type="hidden" id="sCode" />
+
+      <div class="divider"></div>
+
+      <!-- M3U section -->
+      <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--cyan);">📋 M3U Playlist</div>
+      <div class="field">
+        <label>M3U URL</label>
+        <input id="sM3u" placeholder="http://provider.com/get.php?username=USER&password=PASS&type=m3u_plus" autocomplete="off" />
+        <div class="field-hint">Full M3U playlist URL from your IPTV provider. Leave blank if using Xtream only.</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Xtream section -->
+      <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--cyan);">⚡ Xtream Codes</div>
+      <div class="field">
+        <label>Xtream Server URL</label>
+        <input id="sXtreamUrl" placeholder="http://provider.com:8080" autocomplete="off" />
+        <div class="field-hint">Base URL only — no path. e.g. http://provider.com:8080</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Xtream Username</label>
+          <input id="sXtreamUser" placeholder="your_username" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Xtream Password</label>
+          <input id="sXtreamPass" type="password" placeholder="your_password" autocomplete="new-password" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- EPG section -->
+      <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--cyan);">📺 EPG / XMLTV</div>
+      <div class="field">
+        <label>XMLTV / EPG URL</label>
+        <input id="sXmltv" placeholder="http://provider.com/xmltv.php?username=USER&password=PASS" autocomplete="off" />
+        <div class="field-hint">Electronic Programme Guide URL. Optional.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('serverModal')">Cancel</button>
+      <button class="btn btn-cyan" id="sSaveBtn">Save Server</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DEVICE MODAL ═══ -->
+<div class="modal-wrap" id="devModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Device License</h2>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('devModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="devModalErr"></div>
+      <div class="field">
+        <label>Device ID</label>
+        <input id="dId" readonly class="mono" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Platform</label>
+          <input id="dPlatform" readonly />
+        </div>
+        <div class="field">
+          <label>Current Status</label>
+          <input id="dStatus" readonly />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Trial Ends</label>
+          <input id="dTrial" readonly />
+        </div>
+        <div class="field">
+          <label>Paid Until</label>
+          <input id="dPaid" readonly />
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Grant Plan</label>
+        <select id="dPlan">
+          <option value="yearly">Yearly (365 days)</option>
+          <option value="lifetime">Lifetime</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Days (for Yearly)</label>
+        <input id="dDays" placeholder="365" type="number" min="1" max="3650" />
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="dRevokeBtn">Revoke Access</button>
+      <button class="btn btn-outline" onclick="closeModal('devModal')">Cancel</button>
+      <button class="btn btn-cyan" id="dGrantBtn">Grant Access</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle"></div>
+  <div class="toast-msg"   id="toastMsg"></div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const LS = {
+  BASE:  'gr81_admin_base_v1',
+  JWT:   'gr81_admin_jwt_v1',
+  EMAIL: 'gr81_admin_email_v1',
+};
+let API_BASE = '';
+let JWT = '';
+let providers = [];
+let allDevices = [];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmtDate = s => s ? new Date(s).toISOString().slice(0, 10) : '—';
+const fmtTime = s => s ? new Date(s).toISOString().slice(0, 16).replace('T', ' ') : '—';
+
+function toast(title, msg, ok = true) {
+  $('toastTitle').textContent = title;
+  $('toastTitle').style.color = ok ? 'var(--ok)' : 'var(--danger)';
+  $('toastMsg').textContent = msg || '';
+  const el = $('toast');
+  el.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function showErr(id, msg) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.display = msg ? 'block' : 'none';
+}
+function showOk(id, msg) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function setConn(ok, label) {
+  $('connDot').className = 'dot ' + (ok ? 'ok' : 'bad');
+  $('connLabel').textContent = label || (ok ? 'Connected' : 'Offline');
+}
+
+function openModal(id) {
+  $(id).classList.add('open');
+}
+function closeModal(id) {
+  $(id).classList.remove('open');
+  showErr(id.replace('Modal', 'ModalErr'), '');
+  showOk(id.replace('Modal', 'ModalOk'), '');
+}
+
+function roleBadge(r) {
+  if (r === 'admin') return `<span class="badge badge-cyan">admin</span>`;
+  if (r === 'provider_admin') return `<span class="badge badge-warn">provider_admin</span>`;
+  return `<span class="badge badge-muted">user</span>`;
+}
+function planBadge(p) {
+  if (p === 'lifetime') return `<span class="badge badge-cyan">lifetime</span>`;
+  if (p === 'yearly')   return `<span class="badge badge-ok">yearly</span>`;
+  return `<span class="badge badge-muted">trial</span>`;
+}
+function statusBadge(s) {
+  if (s === 'active')  return `<span class="badge badge-ok">active</span>`;
+  if (s === 'revoked') return `<span class="badge badge-danger">revoked</span>`;
+  return `<span class="badge badge-warn">expired</span>`;
+}
+function allowedBadge(a) {
+  return a
+    ? `<span class="badge badge-ok">✓ Allowed</span>`
+    : `<span class="badge badge-danger">✗ Blocked</span>`;
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(JWT ? { Authorization: `Bearer ${JWT}` } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch {}
+  if (!res.ok) {
+    const msg = json?.message || json?.error || json?.errors?.[0]?.msg || text || `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return json;
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+$('lBtn').addEventListener('click', async () => {
+  const base = ($('lBase').value || '').trim().replace(/\/+$/, '');
+  const email = ($('lEmail').value || '').trim();
+  const pass  = ($('lPass').value || '').trim();
+  if (!base || !email || !pass) {
+    showErr('loginErr', 'All fields are required.');
+    return;
+  }
+  $('lBtn').disabled = true;
+  API_BASE = base;
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: email, password: pass }),
+    });
+    if (!data?.token) throw new Error('No token returned');
+    JWT = data.token;
+    localStorage.setItem(LS.BASE, base);
+    localStorage.setItem(LS.JWT, JWT);
+    localStorage.setItem(LS.EMAIL, email);
+    $('adminLabel').textContent = email;
+    $('loginScreen').style.display = 'none';
+    $('app').classList.add('visible');
+    setConn(true, 'Connected');
+    loadAll();
+  } catch (e) {
+    showErr('loginErr', e.message);
+    setConn(false);
+  } finally {
+    $('lBtn').disabled = false;
+  }
+});
+$('lPass').addEventListener('keydown', e => { if (e.key === 'Enter') $('lBtn').click(); });
+
+$('btnLogout').addEventListener('click', () => {
+  localStorage.removeItem(LS.JWT);
+  JWT = '';
+  $('app').classList.remove('visible');
+  $('loginScreen').style.display = 'flex';
+  setConn(false);
+});
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+const TITLES = { dashboard: 'Dashboard', users: 'Users', servers: 'Servers', devices: 'Devices', activity: 'Activity' };
+
+function gotoSection(id) {
+  document.querySelectorAll('.navItem').forEach(el => el.classList.toggle('active', el.dataset.section === id));
+  document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === `s-${id}`));
+  $('pageTitle').textContent = TITLES[id] || id;
+  if (id === 'users')    loadUsers();
+  if (id === 'servers')  loadServers();
+  if (id === 'devices')  loadDevices();
+  if (id === 'activity') loadActivity();
+  if (id === 'dashboard') loadDashboard();
+}
+
+document.querySelectorAll('.navItem').forEach(el => {
+  el.addEventListener('click', () => gotoSection(el.dataset.section));
+});
+
+$('btnRefreshTop').addEventListener('click', () => {
+  const active = document.querySelector('.navItem.active')?.dataset?.section || 'dashboard';
+  gotoSection(active);
+});
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [stats, users, devs] = await Promise.all([
+      api('/api/admin/users/stats'),
+      api('/api/admin/users?limit=5'),
+      api('/api/admin/licenses'),
+    ]);
+    $('kUsers').textContent   = stats.totalUsers ?? '—';
+    $('kActive').textContent  = stats.activeDevices ?? '—';
+    $('kTrial').textContent   = stats.trialActive ?? '—';
+    $('kPaid').textContent    = stats.paid ?? '—';
+    $('kDevices').textContent = stats.totalDevices ?? '—';
+    $('kServers').textContent = stats.providers ?? '—';
+
+    // Recent users
+    const uRows = (Array.isArray(users) ? users.slice(0, 5) : []);
+    $('dashUsers').innerHTML = uRows.length
+      ? uRows.map(u => {
+          const prov = providers.find(p => p.id === u.providerId || p.code === u.providerId);
+          return `<tr>
+            <td>${u.email}</td>
+            <td>${roleBadge(u.role)}</td>
+            <td>${prov ? prov.name : '<span class="text-danger">None</span>'}</td>
+            <td class="mono">${fmtDate(u.createdAt)}</td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="4" class="empty">No users</td></tr>`;
+
+    // Recent devices
+    const dRows = (Array.isArray(devs) ? devs.slice(0, 5) : []);
+    $('dashDevices').innerHTML = dRows.length
+      ? dRows.map(d => `<tr>
+          <td class="mono">${d.deviceId?.slice(0, 20)}…</td>
+          <td>${planBadge(d.plan)}</td>
+          <td>${statusBadge(d.status)}</td>
+          <td class="mono">${fmtDate(d.lastCheckedAt)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="4" class="empty">No devices</td></tr>`;
+  } catch (e) {
+    toast('Error', e.message, false);
+  }
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  $('userRows').innerHTML = `<tr><td colspan="6" class="loading">Loading…</td></tr>`;
+  showErr('userErr', '');
+  try {
+    const q = ($('userSearch').value || '').trim();
+    const rows = await api(`/api/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+    renderUsers(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    showErr('userErr', e.message);
+    $('userRows').innerHTML = `<tr><td colspan="6" class="empty">Failed to load</td></tr>`;
+  }
+}
+
+function renderUsers(rows) {
+  const roleFilter = $('userRoleFilter').value;
+  const filtered = roleFilter ? rows.filter(u => u.role === roleFilter) : rows;
+  if (!filtered.length) {
+    $('userRows').innerHTML = `<tr><td colspan="6" class="empty">No users found</td></tr>`;
+    return;
+  }
+  $('userRows').innerHTML = filtered.map(u => {
+    const prov = providers.find(p => p.id === u.providerId || p.code === u.providerId);
+    return `<tr>
+      <td>${u.email}</td>
+      <td>${u.name || '<span class="text-muted">—</span>'}</td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${prov ? `<span class="badge badge-cyan">${prov.name}</span>` : '<span class="text-danger">Not assigned</span>'}</td>
+      <td class="mono">${fmtDate(u.createdAt)}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${u.email}')">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+$('btnUserSearch').addEventListener('click', loadUsers);
+$('userSearch').addEventListener('keydown', e => { if (e.key === 'Enter') loadUsers(); });
+$('userRoleFilter').addEventListener('change', loadUsers);
+
+$('btnNewUser').addEventListener('click', () => {
+  $('userModalTitle').textContent = 'New User';
+  $('uId').value = '';
+  $('uEmail').value = '';
+  $('uEmail').disabled = false;
+  $('uName').value = '';
+  $('uPass').value = '';
+  $('uPassHint').textContent = '(required)';
+  $('uRole').value = 'user';
+  populateProviderSelect('uProvider', '');
+  openModal('userModal');
+});
+
+async function editUser(id) {
+  try {
+    const users = await api(`/api/admin/users?q=`);
+    const u = (Array.isArray(users) ? users : []).find(x => x.id === id);
+    if (!u) return;
+    $('userModalTitle').textContent = 'Edit User';
+    $('uId').value = id;
+    $('uEmail').value = u.email;
+    $('uEmail').disabled = true;
+    $('uName').value = u.name || '';
+    $('uPass').value = '';
+    $('uPassHint').textContent = '(leave blank to keep)';
+    $('uRole').value = u.role;
+    populateProviderSelect('uProvider', u.providerId || '');
+    openModal('userModal');
+  } catch (e) {
+    toast('Error', e.message, false);
+  }
+}
+
+async function deleteUser(id, email) {
+  if (!confirm(`Delete user: ${email}?`)) return;
+  try {
+    await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+    toast('Deleted', email);
+    loadUsers();
+  } catch (e) {
+    toast('Error', e.message, false);
+  }
+}
+
+$('uSaveBtn').addEventListener('click', async () => {
+  showErr('userModalErr', '');
+  showOk('userModalOk', '');
+  const id       = $('uId').value;
+  const email    = ($('uEmail').value || '').trim();
+  const name     = ($('uName').value || '').trim();
+  const password = ($('uPass').value || '').trim();
+  const role     = $('uRole').value;
+  const provEl   = $('uProvider');
+  const providerId = provEl.value || null;
+
+  try {
+    if (id) {
+      const body = { name, role, providerId };
+      if (password) body.password = password;
+      await api(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+      showOk('userModalOk', 'User updated.');
+    } else {
+      if (!email || !password) { showErr('userModalErr', 'Email and password are required.'); return; }
+      await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ email, name, password, role, providerId }) });
+      showOk('userModalOk', 'User created.');
+    }
+    setTimeout(() => { closeModal('userModal'); loadUsers(); }, 800);
+  } catch (e) {
+    showErr('userModalErr', e.message);
+  }
+});
+
+// ── Servers ───────────────────────────────────────────────────────────────────
+async function loadServers() {
+  $('serverRows').innerHTML = `<tr><td colspan="5" class="loading">Loading…</td></tr>`;
+  showErr('serverErr', '');
+  try {
+    const rows = await api('/api/providers');
+    providers = Array.isArray(rows) ? rows : [];
+    renderServers(providers);
+  } catch (e) {
+    showErr('serverErr', e.message);
+  }
+}
+
+function renderServers(rows) {
+  if (!rows.length) {
+    $('serverRows').innerHTML = `<tr><td colspan="7" class="empty">No servers yet. Add one!</td></tr>`;
+    return;
+  }
+  $('serverRows').innerHTML = rows.map(s => {
+    const hasM3u    = !!s.m3uUrl;
+    const hasXtream = !!s.xtreamUrl;
+    const types = [hasM3u && 'M3U', hasXtream && 'Xtream'].filter(Boolean);
+    const typeBadges = types.length
+      ? types.map(t => `<span class="badge badge-cyan" style="margin-right:3px">${t}</span>`).join('')
+      : '<span class="badge badge-muted">None</span>';
+    return `<tr>
+      <td class="fw">${s.name}</td>
+      <td><span class="badge badge-muted">${s.code}</span></td>
+      <td>${typeBadges}</td>
+      <td class="mono" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.m3uUrl ? s.m3uUrl : '—'}</td>
+      <td class="mono">${s.xtreamUrl ? `${s.xtreamUrl} <span style="color:var(--muted)">(${s.xtreamUsername || '—'})</span>` : '—'}</td>
+      <td>${s.xmltvUrl ? '<span class="badge badge-ok">✓</span>' : '—'}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-outline btn-sm" onclick="editServer('${s.id}')">Edit</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function populateProviderSelect(selectId, selected) {
+  const el = $(selectId);
+  el.innerHTML = `<option value="">— No server assigned —</option>` +
+    providers.map(p => `<option value="${p.id}" ${(p.id === selected || p.code === selected) ? 'selected' : ''}>${p.name} (${p.code})</option>`).join('');
+}
+
+function slugify(name) {
+  return (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || ('srv_' + Date.now());
+}
+
+$('btnNewServer').addEventListener('click', () => {
+  $('serverModalTitle').textContent = 'Add Server';
+  ['sId','sName','sCode','sM3u','sXtreamUrl','sXtreamUser','sXtreamPass','sXmltv'].forEach(id => $(id).value = '');
+  $('sXtreamPass').type = 'password';
+  $('sXtreamPass').placeholder = 'your_password';
+  openModal('serverModal');
+});
+
+function editServer(id) {
+  const s = providers.find(p => p.id === id);
+  if (!s) return;
+  $('serverModalTitle').textContent = 'Edit Server';
+  $('sId').value          = id;
+  $('sName').value        = s.name || '';
+  $('sCode').value        = s.code || '';
+  $('sM3u').value         = s.m3uUrl || '';
+  $('sXtreamUrl').value   = s.xtreamUrl || '';
+  $('sXtreamUser').value  = s.xtreamUsername || '';
+  $('sXtreamPass').value  = '';
+  $('sXtreamPass').placeholder = s.xtreamPassword ? '(saved — leave blank to keep)' : 'your_password';
+  $('sXmltv').value       = s.xmltvUrl || '';
+  openModal('serverModal');
+}
+
+$('sSaveBtn').addEventListener('click', async () => {
+  showErr('serverModalErr', '');
+  const id              = $('sId').value;
+  const name            = ($('sName').value || '').trim();
+  const code            = ($('sCode').value || '').trim() || slugify(name);
+  const m3uUrl          = ($('sM3u').value || '').trim() || null;
+  const xtreamUrl       = ($('sXtreamUrl').value || '').trim() || null;
+  const xtreamUsername  = ($('sXtreamUser').value || '').trim() || null;
+  const xtreamPassRaw   = ($('sXtreamPass').value || '').trim();
+  const xmltvUrl        = ($('sXmltv').value || '').trim() || null;
+
+  if (!name) { showErr('serverModalErr', 'Server name is required.'); return; }
+
+  const payload = { name, m3uUrl, xtreamUrl, xtreamUsername, xmltvUrl };
+  if (xtreamPassRaw) payload.xtreamPassword = xtreamPassRaw;
+
+  try {
+    if (id) {
+      await api(`/api/providers/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      await api('/api/providers', { method: 'POST', body: JSON.stringify({ ...payload, code }) });
+    }
+    toast('Saved', name);
+    closeModal('serverModal');
+    loadServers();
+  } catch (e) {
+    showErr('serverModalErr', e.message);
+  }
+});
+
+// ── Devices ───────────────────────────────────────────────────────────────────
+async function loadDevices() {
+  $('devRows').innerHTML = `<tr><td colspan="8" class="loading">Loading…</td></tr>`;
+  showErr('devErr', '');
+  try {
+    const q = ($('devSearch').value || '').trim();
+    const rows = await api(`/api/admin/licenses${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+    allDevices = Array.isArray(rows) ? rows : [];
+    renderDevices(allDevices);
+  } catch (e) {
+    showErr('devErr', e.message);
+  }
+}
+
+function renderDevices(rows) {
+  const plan   = $('devPlanFilter').value;
+  const status = $('devStatusFilter').value;
+  const filtered = rows.filter(d =>
+    (!plan   || d.plan === plan) &&
+    (!status || d.status === status)
+  );
+  if (!filtered.length) {
+    $('devRows').innerHTML = `<tr><td colspan="8" class="empty">No devices found</td></tr>`;
+    return;
+  }
+  $('devRows').innerHTML = filtered.map(d => `<tr>
+    <td class="mono" style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${d.deviceId}</td>
+    <td>${d.platform || '—'}</td>
+    <td>${planBadge(d.plan)}</td>
+    <td>${statusBadge(d.status)}</td>
+    <td class="mono">${fmtDate(d.trialEndsAt)}</td>
+    <td class="mono">${fmtDate(d.paidUntil)}</td>
+    <td class="mono">${fmtDate(d.lastCheckedAt)}</td>
+    <td>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" onclick="openDevModal('${d.deviceId}')">Manage</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+$('btnDevSearch').addEventListener('click', loadDevices);
+$('devSearch').addEventListener('keydown', e => { if (e.key === 'Enter') loadDevices(); });
+$('devPlanFilter').addEventListener('change', () => renderDevices(allDevices));
+$('devStatusFilter').addEventListener('change', () => renderDevices(allDevices));
+
+function openDevModal(deviceId) {
+  const d = allDevices.find(x => x.deviceId === deviceId);
+  if (!d) return;
+  showErr('devModalErr', '');
+  $('dId').value = d.deviceId;
+  $('dPlatform').value = d.platform || '—';
+  $('dStatus').value = `${d.status} / ${d.plan} — ${d.computed?.allowed ? 'Allowed' : 'Blocked'} (${d.computed?.reason || ''})`;
+  $('dTrial').value = fmtDate(d.trialEndsAt);
+  $('dPaid').value  = fmtDate(d.paidUntil);
+  $('dPlan').value  = 'yearly';
+  $('dDays').value  = '365';
+  openModal('devModal');
+}
+
+$('dGrantBtn').addEventListener('click', async () => {
+  showErr('devModalErr', '');
+  const deviceId = $('dId').value;
+  const plan     = $('dPlan').value;
+  const days     = parseInt($('dDays').value) || 365;
+  try {
+    await api(`/api/admin/licenses/${encodeURIComponent(deviceId)}/grant`, {
+      method: 'POST', body: JSON.stringify({ plan, days }),
+    });
+    toast('Granted', `${plan} access for ${deviceId.slice(0, 16)}…`);
+    closeModal('devModal');
+    loadDevices();
+  } catch (e) { showErr('devModalErr', e.message); }
+});
+
+$('dRevokeBtn').addEventListener('click', async () => {
+  const deviceId = $('dId').value;
+  if (!confirm(`Revoke access for this device?`)) return;
+  try {
+    await api(`/api/admin/licenses/${encodeURIComponent(deviceId)}/revoke`, { method: 'POST', body: '{}' });
+    toast('Revoked', deviceId.slice(0, 16) + '…', false);
+    closeModal('devModal');
+    loadDevices();
+  } catch (e) { showErr('devModalErr', e.message); }
+});
+
+// ── Activity ──────────────────────────────────────────────────────────────────
+async function loadActivity() {
+  $('activityRows').innerHTML = `<tr><td colspan="7" class="loading">Loading…</td></tr>`;
+  try {
+    const rows = await api('/api/admin/licenses?limit=200');
+    const sorted = (Array.isArray(rows) ? rows : [])
+      .sort((a, b) => new Date(b.lastCheckedAt || 0) - new Date(a.lastCheckedAt || 0));
+    if (!sorted.length) {
+      $('activityRows').innerHTML = `<tr><td colspan="7" class="empty">No activity yet</td></tr>`;
+      return;
+    }
+    $('activityRows').innerHTML = sorted.map(d => `<tr>
+      <td class="mono">${d.deviceId}</td>
+      <td>${d.platform || '—'}</td>
+      <td>${planBadge(d.plan)}</td>
+      <td>${statusBadge(d.status)}</td>
+      <td class="mono">${fmtTime(d.firstSeenAt)}</td>
+      <td class="mono">${fmtTime(d.lastCheckedAt)}</td>
+      <td>${allowedBadge(d.computed?.allowed)}</td>
+    </tr>`).join('');
+  } catch (e) {
+    $('activityRows').innerHTML = `<tr><td colspan="7" class="empty">Failed to load</td></tr>`;
+  }
+}
+$('btnRefreshActivity').addEventListener('click', loadActivity);
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+async function loadAll() {
+  await loadServers();
+  await loadDashboard();
+}
+
+function init() {
+  const base  = localStorage.getItem(LS.BASE) || '';
+  const jwt   = localStorage.getItem(LS.JWT)  || '';
+  const email = localStorage.getItem(LS.EMAIL) || '';
+  $('lBase').value  = base || (window.location.origin !== 'null' && window.location.protocol !== 'file:' ? window.location.origin : 'http://localhost:5000');
+  $('lEmail').value = email;
+
+  if (base && jwt) {
+    API_BASE = base;
+    JWT = jwt;
+    $('adminLabel').textContent = email;
+    // Test token still valid
+    api('/api/admin/users/stats')
+      .then(() => {
+        $('loginScreen').style.display = 'none';
+        $('app').classList.add('visible');
+        setConn(true, 'Connected');
+        loadAll();
+      })
+      .catch(() => {
+        localStorage.removeItem(LS.JWT);
+        setConn(false);
+      });
+  }
+}
+
+init();
+</script>
+</body>
+</html>

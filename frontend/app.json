@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "GR81 Aqua",
+    "slug": "gr81aqua",
+    "version": "0.0.1",
+    "scheme": "gr81aqua",
+    "icon": "./assets/public/bg_logo.png",
+    "orientation": "landscape",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/public/bg_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.millihub.gr81aqua",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/public/icon.png",
+        "backgroundColor": "#0d1b2a"
+      },
+      "package": "com.millihub.gr81aqua",
+      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "androidStatusBar": {
+        "hidden": true,
+        "translucent": true,
+        "backgroundColor": "#00000000"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/public/icon.png"
+    },
+    "extra": {
+      "apiUrl": "http://YOUR_LOCAL_IP:5000",
+      "eas": {
+        "projectId": "a1fc0356-abae-4a94-ac27-a0ff7e6c0c7d"
+      }
+    },
+    "owner": "millihub_dev",
+    "plugins": [
+      "./plugins/withCleartextTraffic",
+      "./plugins/withImmersiveMode",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
+            "kotlinVersion": "2.0.21",
+            "javaVersion": "17",
+            "gradleProperties": {
+              "android.suppressUnsupportedCompileSdk": "35",
+              "kotlin.jvm.target.validation.mode": "WARNING"
+            }
+          }
+        }
+      ]
+    ]
+  }
+}
