@@ -1,215 +1,200 @@
-Backend (Node.js + Express + PostgreSQL)
-📖 About
+# GR81 Aqua — Backend API
 
-This is the Backend API for the SmartPrime8K XPlay-like media streaming platform.
-It powers the mobile frontend (React Native + Expo) and the Admin Dashboard, providing:
+Node.js + Express + PostgreSQL backend powering the GR81 Aqua IPTV player app and admin panel.
 
-Authentication & user management.
+---
 
-Movies, Series & Live TV APIs.
+## What it does
 
-Profile & account management.
+- **Device licensing** — trial / yearly / lifetime via Stripe
+- **User management** — admin creates accounts and assigns IPTV servers
+- **Provider/server management** — M3U and Xtream Codes servers with EPG support
+- **Admin panel** — web UI at `/admin` for managing users, servers, and devices
+- **Auth** — JWT-based login (username + password)
 
-QR Code device pairing.
+---
 
-Dashboard & settings.
+## Tech stack
 
-The backend is built with Node.js + Express, uses PostgreSQL as the primary database, and is designed for scalability and secure content delivery.
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js 18+ |
+| Framework | Express |
+| Database | PostgreSQL (Neon cloud) |
+| ORM | Sequelize |
+| Auth | JWT + bcryptjs |
+| Payments | Stripe |
+| Logging | Winston + Morgan |
 
-🎯 Features
+---
 
-User Management
+## Project structure
 
-Register / Login with User ID.
-
-Multi-profile support (like Netflix).
-
-JWT Authentication.
-
-Content Management
-
-Movies & Series (list, details, categories).
-
-Live TV channels (News, Events, Sports, etc.).
-
-Search API for movies, series & TV.
-
-User Actions
-
-My List (favorites).
-
-QR Code pairing for device login.
-
-Account & subscription details.
-
-Admin APIs (for Admin Panel)
-
-Upload / update content.
-
-Manage categories, channels, and users.
-
-Monitor usage & analytics.
-
-📂 Project Structure
+```
 backend/
-│── config/
-│   ├── db.js             # Sequelize connection to PostgreSQL
-│   └── env.js            # Environment variables
-│
-│── controllers/          # Business logic for each route
-│   ├── authController.js
-│   ├── movieController.js
-│   ├── tvController.js
-│   ├── profileController.js
-│   ├── userController.js
-│   └── qrController.js
-│
-│── middleware/           # Custom middleware
-│   ├── authMiddleware.js
+├── controllers/
+│   ├── adminUserController.js     # Admin: user CRUD
+│   ├── adminLicenseController.js  # Admin: device licenses
+│   ├── authController.js          # Login / register
+│   ├── licensingController.js     # Device trial/paid check
+│   ├── providerController.js      # IPTV server CRUD
+│   └── ...
+├── middleware/
+│   ├── authMiddleware.js          # JWT verification
+│   ├── roles.js                   # Role guard (admin etc.)
+│   ├── validate.js                # express-validator helper
 │   └── errorHandler.js
-│
-│── models/               # Sequelize models
+├── migrations/                    # Sequelize migration files
+├── models/                        # Sequelize models
 │   ├── User.js
-│   ├── Profile.js
-│   ├── Movie.js
-│   ├── Series.js
-│   ├── TVChannel.js
-│   └── QRSession.js
-│
-│── routes/               # API endpoints
+│   ├── Provider.js                # IPTV server (M3U / Xtream)
+│   ├── DeviceLicense.js           # Per-device trial/paid
+│   └── ...
+├── routes/
 │   ├── authRoutes.js
-│   ├── movieRoutes.js
-│   ├── tvRoutes.js
-│   ├── profileRoutes.js
-│   ├── userRoutes.js
-│   └── qrRoutes.js
-│
-│── migrations/           # Sequelize migrations
-│── seeders/              # Initial seed data
-│── utils/                # Utility functions
-│   ├── generateToken.js
-│   └── logger.js
-│
-│── app.js                # Express app setup
-│── server.js             # Server entry point
-│── package.json
-└── README.md
+│   ├── adminUserRoutes.js
+│   ├── adminLicenseRoutes.js
+│   ├── providerRoutes.js
+│   └── ...
+├── scripts/
+│   └── seedAdmin.js               # Create first admin user
+├── admin.html                     # Admin panel (served at /admin)
+├── app.js
+└── server.js
+```
 
-⚡️ Tech Stack
+---
 
-Node.js + Express – API framework.
+## Getting started
 
-PostgreSQL – Relational database.
-
-Sequelize ORM – Database ORM for Postgres.
-
-JWT (JSON Web Tokens) – Authentication.
-
-bcrypt.js – Password hashing.
-
-Multer / Cloudinary / AWS S3 – Media upload (movies, series, posters).
-
-🚀 Getting Started
-Prerequisites
-
-Node.js ≥ 18
-
-PostgreSQL ≥ 14
-
-Git
-
-Installation
-# Clone the repo
-git clone https://github.com/your-org/xplay-backend.git
-cd xplay-backend
-
-# Install dependencies
+### 1. Install dependencies
+```bash
 npm install
+```
 
-Environment Variables
+### 2. Environment variables
 
-Create a .env file in the root with:
+Create a `.env` file:
 
+```env
 PORT=5000
-DATABASE_URL=postgres://<user>:<password>@localhost:5432/xplay
-JWT_SECRET=your_jwt_secret
-CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+NODE_ENV=development
 
-Run Migrations & Seeders
-# Run database migrations
-npx sequelize-cli db:migrate
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+JWT_SECRET=your_strong_secret_here
 
-# (Optional) Seed initial data
-npx sequelize-cli db:seed:all
+# Leave empty to allow all origins (dev). Set specific URLs in production.
+ALLOWED_ORIGINS=
 
-Run Server
-# Development
+# Stripe (for device licensing payments)
+STRIPE_SECRET_KEY=sk_live_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# Deep link scheme (matches app.json scheme)
+APP_SCHEME=gr81aqua
+```
+
+### 3. Run migrations
+```bash
+npx sequelize db:migrate
+```
+
+### 4. Seed the admin user
+```bash
+node scripts/seedAdmin.js
+```
+Prints the admin email, password, and JWT to the console.
+
+### 5. Start the server
+```bash
+# Development (auto-restart)
 npm run dev
 
 # Production
 npm start
+```
 
+Server runs at → **http://localhost:5000**
 
-Server runs on:
-👉 http://localhost:5000
+---
 
-📡 API Endpoints
-Auth
+## API reference
 
-POST /api/auth/register – Register user.
+### Auth
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| POST | `/api/auth/login` | `{ username, password }` | Login — returns JWT |
+| POST | `/api/auth/register` | `{ email, password, name }` | Register user |
 
-POST /api/auth/login – Login with User ID.
+### Admin — Users *(requires admin JWT)*
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/admin/users` | List all users |
+| GET | `/api/admin/users/stats` | Dashboard KPIs |
+| POST | `/api/admin/users` | Create user |
+| PUT | `/api/admin/users/:id` | Update user (role, server, password) |
+| DELETE | `/api/admin/users/:id` | Delete user |
 
-Movies & Series
+### Admin — Device Licenses *(requires admin JWT)*
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/admin/licenses` | List all devices |
+| POST | `/api/admin/licenses/:deviceId/grant` | Grant yearly / lifetime |
+| POST | `/api/admin/licenses/:deviceId/revoke` | Revoke access |
 
-GET /api/movies – List movies.
+### Providers / IPTV Servers *(requires admin JWT)*
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/providers` | List servers |
+| POST | `/api/providers` | Add server |
+| PUT | `/api/providers/:id` | Update server |
 
-GET /api/movies/:id – Movie details.
+### Licensing *(public — called by the app)*
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/licensing/status` | Check device trial/paid status |
+| POST | `/api/licensing/checkout` | Create Stripe checkout session |
 
-GET /api/series – List series.
+---
 
-GET /api/series/:id – Series details.
+## Admin panel
 
-TV
+Open in browser: **http://localhost:5000/admin**
 
-GET /api/tv – List channels.
+Login with the credentials printed by `node scripts/seedAdmin.js`.
 
-GET /api/tv/:id – Channel details.
+Features:
+- **Dashboard** — KPIs (users, devices, trial, paid, servers)
+- **Users** — create/edit/delete users, assign IPTV server
+- **Servers** — add M3U / Xtream / EPG servers
+- **Devices** — grant / revoke device licenses
+- **Activity** — device check-in log
 
-Profiles
+---
 
-GET /api/profiles – Get user profiles.
+## Deployment (Render)
 
-POST /api/profiles – Add profile.
+1. Push code to GitHub
+2. Create a new **Web Service** on [render.com](https://render.com)
+3. Set **Build Command**: `npm install`
+4. Set **Start Command**: `npm start`
+5. Add environment variables in the Render dashboard (same as `.env` above)
+6. Run migrations locally against your cloud DB:
+   ```bash
+   npx sequelize db:migrate
+   ```
 
-My List
+---
 
-POST /api/mylist – Add movie/series.
+## Database models
 
-GET /api/mylist – Get user’s list.
-
-QR Code
-
-POST /api/qr/generate – Generate QR session.
-
-POST /api/qr/verify – Verify QR login.
-
-🛠 Development Notes
-
-API responses follow REST standards.
-
-Use Postman or Insomnia for testing.
-
-Follow MVC structure for clean code.
-
-Error handling centralized in middleware/errorHandler.js.
-
-Database relationships managed via Sequelize associations:
-
-User ↔ Profile (1:N)
-
-User ↔ MyList (1:N)
-
-Movie ↔ Category (M:N)
-
-Series ↔ Episodes (1:N)
+| Model | Description |
+|---|---|
+| `User` | App users — email, hashed password, role, assigned provider |
+| `Provider` | IPTV servers — M3U URL, Xtream URL/credentials, EPG URL |
+| `DeviceLicense` | Per-device trial / yearly / lifetime license |
+| `TVChannel` | Ingested live channels |
+| `Movie` / `Series` / `Episode` | Ingested VOD content |
+| `EPGEvent` | Electronic Programme Guide events |
+| `Subscription` | User subscription records |
+| `QRSession` | QR code pairing sessions |
