@@ -26,7 +26,10 @@
       "Bash(node -e \"require\\('./babel.config.js'\\); console.log\\('babel ok'\\)\")",
       "Bash(npx expo-doctor *)",
       "Bash(node -e ' *)",
-      "Bash(npx expo *)"
+      "Bash(npx expo *)",
+      "Bash(git -C /Users/ok/Documents/projects/gr81_aqua status)",
+      "Bash(git -C /Users/ok/Documents/projects/gr81_aqua diff --stat HEAD)",
+      "Bash(git -C /Users/ok/Documents/projects/gr81_aqua remote get-url origin)"
     ]
   }
 }
