@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{url_effective}\\\\n\" \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://breeds45371.matrix.t8kpower.xyz/get.php?username=Test&password=364867e419&type=m3u_plus&output=ts\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419\")",
+      "Bash(curl -s -H \"User-Agent: okhttp/4.9.3\" \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ui=d.get\\('user_info',{}\\); print\\('auth:', ui.get\\('auth'\\), '| status:', ui.get\\('status'\\), '| max_conn:', ui.get\\('max_connections'\\)\\)\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_live_streams\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://urban19076.wd.t8kpower.xyz/live/Test/364867e419/483976.m3u8\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://urban19076.wd.t8kpower.xyz/live/Test/364867e419/483976.ts\")",
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\" \"http://urban19076.wd.t8kpower.xyz/live/Test/364867e419/483976.m3u8\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_vod_categories\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_vod_streams&category_id=1\")",
+      "Bash(curl -sI -L \"http://urban19076.wd.t8kpower.xyz/live/Test/364867e419/483976.m3u8\")",
+      "Bash(curl -sL \"http://urban19076.wd.t8kpower.xyz/live/Test/364867e419/483976.m3u8\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_vod_streams&category_id=99\")",
+      "Bash(curl -sI -L \"http://urban19076.wd.t8kpower.xyz/movie/Test/364867e419/1925976.mkv\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_live_categories\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_live_streams&category_id=662\")",
+      "Bash(curl -s \"http://urban19076.wd.t8kpower.xyz/player_api.php?username=Test&password=364867e419&action=get_vod_info&vod_id=1925976\")",
+      "Bash(npm install *)",
+      "Bash(export CLAUDE_CODE_TMPDIR=/tmp)",
+      "Bash(grep -rn -i \"smartprime\" /Users/ok/Documents/projects/gr81_aqua/frontend/screens /Users/ok/Documents/projects/gr81_aqua/frontend/components /Users/ok/Documents/projects/gr81_aqua/frontend/services /Users/ok/Documents/projects/gr81_aqua/backend/controllers /Users/ok/Documents/projects/gr81_aqua/backend/scripts)",
+      "Bash(node -e \"require\\('./babel.config.js'\\); console.log\\('babel ok'\\)\")",
+      "Bash(npx expo-doctor *)",
+      "Bash(node -e ' *)",
+      "Bash(npx expo *)"
+    ]
+  }
+}
