@@ -13,8 +13,8 @@ async function connectDB() {
   }
   await sequelize.authenticate();
   console.log('Connected to PostgreSQL');
-  // Auto-sync models — alter:true adds missing columns without dropping existing data
-  await sequelize.sync({ alter: true });
+  // sync() only creates tables that don't exist — use migrations for schema changes
+  await sequelize.sync();
   console.log('Sequelize models synchronized');
 }
 
