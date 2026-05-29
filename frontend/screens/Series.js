@@ -58,22 +58,22 @@ function TopNav({ navigation }) {
             style={[styles.navTab, t.id === 'series' && styles.navTabActive]}
             onPress={t.onPress}
           >
-            <Ionicons name={t.icon} size={15} color={t.id === 'series' ? '#e8f4ff' : '#5a7d9a'} style={{ marginRight: 6 }} />
+            <Ionicons name={t.icon} size={15} color={t.id === 'series' ? '#ffffff' : '#888888'} style={{ marginRight: 6 }} />
             <Text style={[styles.navTabTxt, t.id === 'series' && styles.navTabTxtActive]}>{t.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <TouchableOpacity style={styles.globalSearch} onPress={() => navigation.navigate('Search')}>
-        <Ionicons name="search-outline" size={14} color="#4a6a88" style={{ marginRight: 6 }} />
+        <Ionicons name="search-outline" size={14} color="#777777" style={{ marginRight: 6 }} />
         <Text style={styles.globalSearchTxt}>Search Global...</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.settingsBtn} onPress={() => navigation.navigate('Settings')}>
-        <Ionicons name="settings-outline" size={18} color="#7aaac8" />
+        <Ionicons name="settings-outline" size={18} color="#aaaaaa" />
       </TouchableOpacity>
       <View style={styles.logoWrap}>
         <Image source={FlameIcon} style={styles.navFlame} resizeMode="contain" />
         <Text style={styles.navLogoTxt}>
-          <Text style={{ color: '#e8f4ff' }}>GR81</Text>
+          <Text style={{ color: '#ffffff' }}>GR81</Text>
           <Text style={{ color: '#00b8cc' }}> AQUA</Text>
         </Text>
       </View>
@@ -93,7 +93,7 @@ function CatRow({ item, active, onPress }) {
       <Ionicons
         name={item.icon}
         size={15}
-        color={active ? '#00b8cc' : '#3a5878'}
+        color={active ? '#00b8cc' : '#666666'}
         style={{ marginRight: 10 }}
       />
       <Text style={[styles.catName, active && styles.catNameActive]} numberOfLines={1}>
@@ -128,7 +128,7 @@ function SeriesCard({ item, cardWidth, onPress }) {
         />
       ) : (
         <View style={[styles.poster, styles.posterFallback, { width: cardWidth, height: cardHeight }]}>
-          <Ionicons name="tv-outline" size={28} color="#1e3d5c" />
+          <Ionicons name="tv-outline" size={28} color="#2c2c2c" />
         </View>
       )}
       <Text style={styles.cardLabel} numberOfLines={1}>{title}{year}</Text>
@@ -148,21 +148,25 @@ export default function Series({ navigation }) {
   const [sortBy, setSortBy]               = useState('added');
   const [showSort, setShowSort]           = useState(false);
   const [loading, setLoading]             = useState(true);
+  const [fetchError, setFetchError]       = useState('');
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       setLoading(true);
+      setFetchError('');
       (async () => {
         try {
           const [cats, items] = await Promise.all([
-            fetchSeriesCategories().catch(() => []),
-            fetchSeriesItems({ limit: 1000 }).catch(() => []),
+            fetchSeriesCategories(),
+            fetchSeriesItems({ limit: 1000 }),
           ]);
           if (!alive) return;
           setApiCats(Array.isArray(cats) ? cats : []);
           setAllItems(Array.isArray(items) ? items : []);
-        } catch {}
+        } catch (e) {
+          if (alive) setFetchError(e?.message || 'Failed to load series');
+        }
         if (alive) setLoading(false);
       })();
       return () => { alive = false; };
@@ -232,7 +236,7 @@ export default function Series({ navigation }) {
             <TextInput
               style={styles.catSearchInput}
               placeholder="Search series"
-              placeholderTextColor="#3a5878"
+              placeholderTextColor="#666666"
               value={catSearch}
               onChangeText={setCatSearch}
               selectionColor="#00b8cc"
@@ -255,13 +259,23 @@ export default function Series({ navigation }) {
           <View style={styles.sortBar}>
             <TouchableOpacity style={styles.sortBtn} onPress={() => setShowSort(true)}>
               <Text style={styles.sortBtnTxt}>{currentSortLabel}</Text>
-              <Ionicons name="chevron-down" size={14} color="#7aaac8" style={{ marginLeft: 8 }} />
+              <Ionicons name="chevron-down" size={14} color="#aaaaaa" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
           </View>
 
           {loading ? (
             <View style={styles.loadingBox}>
               <Text style={styles.loadingTxt}>Loading series...</Text>
+            </View>
+          ) : fetchError ? (
+            <View style={styles.loadingBox}>
+              <Ionicons name="videocam-outline" size={36} color="#444444" style={{ marginBottom: 12 }} />
+              <Text style={[styles.loadingTxt, { textAlign: 'center', marginBottom: 16 }]}>
+                {fetchError.includes('playlist') ? 'No playlist configured' : 'Could not load series'}
+              </Text>
+              <TouchableOpacity style={styles.errorBtn} onPress={() => navigation.navigate('Playlist')}>
+                <Text style={styles.errorBtnTxt}>Configure Playlist</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <FlatList
@@ -310,34 +324,34 @@ export default function Series({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  bg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,10,20,0.78)' },
+  bg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.58)' },
 
   topNav: {
     height: 58, flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 14, gap: 8,
-    borderBottomWidth: 1, borderBottomColor: '#0e2038',
-    backgroundColor: '#07101e',
+    borderBottomWidth: 1, borderBottomColor: '#222222',
+    backgroundColor: '#0a0a0a',
   },
   navTabs:         { flexDirection: 'row', gap: 8 },
   navTab: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 8, borderWidth: 1,
-    borderColor: '#1a3352', backgroundColor: '#0a1828',
+    borderColor: '#2c2c2c', backgroundColor: '#151515',
   },
-  navTabActive:    { borderColor: '#00b8cc', backgroundColor: '#0a1c34' },
-  navTabTxt:       { color: '#5a7d9a', fontSize: 13, fontWeight: '600' },
-  navTabTxtActive: { color: '#e8f4ff' },
+  navTabActive:    { borderColor: '#00b8cc', backgroundColor: '#1e1e1e' },
+  navTabTxt:       { color: '#888888', fontSize: 13, fontWeight: '600' },
+  navTabTxtActive: { color: '#ffffff' },
   globalSearch: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0a1828', borderWidth: 1, borderColor: '#1a3352',
+    backgroundColor: '#151515', borderWidth: 1, borderColor: '#2c2c2c',
     borderRadius: 8, paddingHorizontal: 14, paddingVertical: 9,
   },
-  globalSearchTxt: { color: '#3a5878', fontSize: 13 },
+  globalSearchTxt: { color: '#666666', fontSize: 13 },
   settingsBtn: {
     width: 40, height: 40, borderRadius: 8,
-    borderWidth: 1, borderColor: '#1a3352',
-    backgroundColor: '#0a1828', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#2c2c2c',
+    backgroundColor: '#151515', alignItems: 'center', justifyContent: 'center',
   },
   logoWrap:   { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 6 },
   navFlame:   { width: 22, height: 32 },
@@ -346,56 +360,58 @@ const styles = StyleSheet.create({
   columns:    { flex: 1, flexDirection: 'row' },
 
   leftPanel: {
-    width: 295, borderRightWidth: 1, borderRightColor: '#0e2038',
-    paddingTop: 10, paddingHorizontal: 10, backgroundColor: '#07101e',
+    width: 295, borderRightWidth: 1, borderRightColor: '#222222',
+    paddingTop: 10, paddingHorizontal: 10, backgroundColor: '#0a0a0a',
   },
   catSearchWrap: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0a1828', borderWidth: 1, borderColor: '#1a3352',
+    backgroundColor: '#151515', borderWidth: 1, borderColor: '#2c2c2c',
     borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8,
   },
-  catSearchInput:  { flex: 1, color: '#e8f4ff', fontSize: 13, padding: 0 },
+  catSearchInput:  { flex: 1, color: '#ffffff', fontSize: 13, padding: 0 },
   catRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 11,
     borderRadius: 8, borderWidth: 1, borderColor: 'transparent', marginBottom: 3,
   },
-  catRowActive:    { borderColor: '#00b8cc', backgroundColor: '#0a1c34' },
-  catName:         { color: '#9fb8d0', fontSize: 13, flex: 1, marginRight: 8 },
-  catNameActive:   { color: '#e8f4ff', fontWeight: '600' },
-  catCount:        { color: '#3a5878', fontSize: 12, fontWeight: '600', minWidth: 36, textAlign: 'right' },
-  catCountActive:  { color: '#7aaac8' },
+  catRowActive:    { borderColor: '#00b8cc', backgroundColor: '#1e1e1e' },
+  catName:         { color: '#cccccc', fontSize: 13, flex: 1, marginRight: 8 },
+  catNameActive:   { color: '#ffffff', fontWeight: '600' },
+  catCount:        { color: '#666666', fontSize: 12, fontWeight: '600', minWidth: 36, textAlign: 'right' },
+  catCountActive:  { color: '#aaaaaa' },
 
   rightPanel:  { flex: 1, paddingHorizontal: 20, paddingTop: 12 },
   sortBar:     { flexDirection: 'row', marginBottom: 14 },
   sortBtn: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0a1828', borderWidth: 1, borderColor: '#1a3352',
+    backgroundColor: '#151515', borderWidth: 1, borderColor: '#2c2c2c',
     borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9,
   },
-  sortBtnTxt:      { color: '#9fb8d0', fontSize: 13, fontWeight: '500' },
+  sortBtnTxt:      { color: '#cccccc', fontSize: 13, fontWeight: '500' },
 
   card:            { marginBottom: 4 },
-  poster:          { borderRadius: 8, backgroundColor: '#0a1828' },
+  poster:          { borderRadius: 8, backgroundColor: '#151515' },
   posterFallback:  { alignItems: 'center', justifyContent: 'center' },
-  cardLabel:       { color: '#7aaac8', fontSize: 11, marginTop: 5, paddingHorizontal: 2 },
+  cardLabel:       { color: '#aaaaaa', fontSize: 11, marginTop: 5, paddingHorizontal: 2 },
 
-  loadingBox:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingTxt:      { color: '#3a5878', fontSize: 13 },
+  loadingBox:      { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  loadingTxt:      { color: '#666666', fontSize: 13 },
+  errorBtn:        { backgroundColor: '#00b8cc', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10 },
+  errorBtnTxt:     { color: '#fff', fontSize: 13, fontWeight: '700' },
 
   modalBackdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   sortMenu: {
     position: 'absolute', top: 76, left: 315,
-    backgroundColor: '#0c1e38', borderRadius: 10,
-    borderWidth: 1, borderColor: '#17304e',
+    backgroundColor: '#151515', borderRadius: 10,
+    borderWidth: 1, borderColor: '#2c2c2c',
     overflow: 'hidden', minWidth: 220,
   },
   sortOption: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: '#0e2038',
+    borderBottomWidth: 1, borderBottomColor: '#222222',
   },
-  sortOptionActive:    { backgroundColor: '#0a1c34' },
-  sortOptionTxt:       { color: '#9fb8d0', fontSize: 13 },
-  sortOptionTxtActive: { color: '#e8f4ff', fontWeight: '600' },
+  sortOptionActive:    { backgroundColor: '#1e1e1e' },
+  sortOptionTxt:       { color: '#cccccc', fontSize: 13 },
+  sortOptionTxtActive: { color: '#ffffff', fontWeight: '600' },
 });

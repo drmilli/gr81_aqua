@@ -89,16 +89,16 @@ function AddModal({ visible, onClose, onSaved }) {
             ))}
           </View>
 
-          <TextInput style={modal.input} placeholder="Playlist Name" placeholderTextColor="#3a5878" value={name} onChangeText={setName} selectionColor="#00b8cc" />
+          <TextInput style={modal.input} placeholder="Playlist Name" placeholderTextColor="#666666" value={name} onChangeText={setName} selectionColor="#00b8cc" />
 
           {mode === 'xtream' ? (
             <>
-              <TextInput style={modal.input} placeholder="Server URL" placeholderTextColor="#3a5878" value={serverUrl} onChangeText={setServerUrl} autoCapitalize="none" keyboardType="url" selectionColor="#00b8cc" />
-              <TextInput style={modal.input} placeholder="Username" placeholderTextColor="#3a5878" value={username} onChangeText={setUsername} autoCapitalize="none" selectionColor="#00b8cc" />
-              <TextInput style={modal.input} placeholder="Password" placeholderTextColor="#3a5878" value={password} onChangeText={setPassword} secureTextEntry selectionColor="#00b8cc" />
+              <TextInput style={modal.input} placeholder="Server URL" placeholderTextColor="#666666" value={serverUrl} onChangeText={setServerUrl} autoCapitalize="none" keyboardType="url" selectionColor="#00b8cc" />
+              <TextInput style={modal.input} placeholder="Username" placeholderTextColor="#666666" value={username} onChangeText={setUsername} autoCapitalize="none" selectionColor="#00b8cc" />
+              <TextInput style={modal.input} placeholder="Password" placeholderTextColor="#666666" value={password} onChangeText={setPassword} secureTextEntry selectionColor="#00b8cc" />
             </>
           ) : (
-            <TextInput style={modal.input} placeholder="M3U URL" placeholderTextColor="#3a5878" value={m3uUrl} onChangeText={setM3uUrl} autoCapitalize="none" keyboardType="url" selectionColor="#00b8cc" />
+            <TextInput style={modal.input} placeholder="M3U URL" placeholderTextColor="#666666" value={m3uUrl} onChangeText={setM3uUrl} autoCapitalize="none" keyboardType="url" selectionColor="#00b8cc" />
           )}
 
           {!!error && <Text style={modal.error}>{error}</Text>}
@@ -164,7 +164,7 @@ export default function Playlist({ navigation }) {
         <View style={styles.header}>
           <Image source={FlameIcon} style={styles.headerFlame} resizeMode="contain" />
           <Text style={styles.headerBrand}>
-            <Text style={{ color: '#e8f4ff' }}>GR81</Text>
+            <Text style={{ color: '#ffffff' }}>GR81</Text>
             <Text style={{ color: '#00b8cc' }}> AQUA</Text>
           </Text>
           <View style={styles.divider} />
@@ -188,7 +188,7 @@ export default function Playlist({ navigation }) {
           {/* Add Playlist card */}
           <TouchableOpacity style={styles.addCard} onPress={() => setShowAdd(true)} activeOpacity={0.75}>
             <View style={styles.addIcon}>
-              <Ionicons name="add" size={22} color="#e8f4ff" />
+              <Ionicons name="add" size={22} color="#ffffff" />
             </View>
             <Text style={styles.addLabel}>Add Playlist</Text>
           </TouchableOpacity>
@@ -219,7 +219,7 @@ export default function Playlist({ navigation }) {
 
         {/* Brand */}
         <Text style={styles.rightBrand}>
-          <Text style={{ color: '#e8f4ff' }}>GR81 </Text>
+          <Text style={{ color: '#ffffff' }}>GR81 </Text>
           <Text style={{ color: '#00b8cc' }}>AQUA</Text>
         </Text>
 
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.62)' },
 
   // ── Left panel ────────────────────────────────────────────────
   left: {
@@ -279,31 +279,31 @@ const styles = StyleSheet.create({
   },
   headerFlame: { width: 24, height: 36 },
   headerBrand: { fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
-  divider: { width: 1, height: 28, backgroundColor: '#1e3d5c', marginHorizontal: 4 },
-  headerTitle: { color: '#e8f4ff', fontSize: 22, fontWeight: '700' },
+  divider: { width: 1, height: 28, backgroundColor: '#2c2c2c', marginHorizontal: 4 },
+  headerTitle: { color: '#ffffff', fontSize: 22, fontWeight: '700' },
 
   // List
   listScroll: { flex: 1 },
   playlistCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0c1e38',
+    backgroundColor: '#151515',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  playlistName: { color: '#e8f4ff', fontSize: 14, fontWeight: '600' },
-  playlistType: { color: '#3a5878', fontSize: 11, marginTop: 2 },
+  playlistName: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
+  playlistType: { color: '#666666', fontSize: 11, marginTop: 2 },
   deleteBtn:    { padding: 6 },
 
   // Add card
   addCard: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1a3352',
-    backgroundColor: '#0a1828',
+    borderColor: '#2c2c2c',
+    backgroundColor: '#151515',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 24,
@@ -313,18 +313,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#0d2a4a',
+    backgroundColor: '#1e1e1e',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addLabel: { color: '#9fb8d0', fontSize: 13, fontWeight: '500' },
+  addLabel: { color: '#cccccc', fontSize: 13, fontWeight: '500' },
 
   // Bottom branding
   bottomBrand:    { alignItems: 'flex-start', marginTop: 16 },
-  bottomBrandName:{ color: '#e8f4ff', fontSize: 15, fontWeight: '800' },
-  bottomBrandSub: { color: '#4a6a88', fontSize: 12, marginTop: 2 },
+  bottomBrandName:{ color: '#ffffff', fontSize: 15, fontWeight: '800' },
+  bottomBrandSub: { color: '#777777', fontSize: 12, marginTop: 2 },
 
   // ── Right panel ───────────────────────────────────────────────
   right: {
@@ -347,21 +347,21 @@ const styles = StyleSheet.create({
   // Open Website
   websiteBtn: {
     width: '100%',
-    backgroundColor: '#0c1e38',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  websiteBtnTxt: { color: '#e8f4ff', fontSize: 13, fontWeight: '600' },
+  websiteBtnTxt: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
 
   // Brand
   rightBrand: { fontSize: 18, fontWeight: '800', letterSpacing: 0.5, textAlign: 'center' },
 
   // Info blocks
   infoBlock: { alignItems: 'center', gap: 3 },
-  infoLabel: { color: '#e8f4ff', fontSize: 13, fontWeight: '700' },
+  infoLabel: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
   infoValue: { color: '#00b8cc', fontSize: 14, fontWeight: '600', letterSpacing: 0.8 },
 
   // Version
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 24,
-    color: '#4a6a88',
+    color: '#777777',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -386,28 +386,28 @@ const modal = StyleSheet.create({
   },
   card: {
     width: 400,
-    backgroundColor: '#0c1e38',
+    backgroundColor: '#151515',
     borderRadius: 16,
     padding: 28,
     borderWidth: 1,
-    borderColor: '#17304e',
+    borderColor: '#2c2c2c',
   },
-  title: { color: '#e8f4ff', fontSize: 17, fontWeight: '700', marginBottom: 18 },
+  title: { color: '#ffffff', fontSize: 17, fontWeight: '700', marginBottom: 18 },
   modeRow: {
     flexDirection: 'row',
-    backgroundColor: '#081428',
+    backgroundColor: '#111111',
     borderRadius: 30,
     padding: 4,
     marginBottom: 18,
   },
   modeBtn:       { flex: 1, paddingVertical: 8, borderRadius: 26, alignItems: 'center' },
   modeBtnActive: { backgroundColor: '#00b8cc' },
-  modeTxt:       { fontSize: 13, fontWeight: '600', color: '#4a7090' },
+  modeTxt:       { fontSize: 13, fontWeight: '600', color: '#777777' },
   modeTxtActive: { color: '#fff' },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: '#1e3d5c',
-    color: '#e8f4ff',
+    borderBottomColor: '#2c2c2c',
+    color: '#ffffff',
     fontSize: 14,
     paddingVertical: 10,
     marginBottom: 16,
@@ -418,12 +418,12 @@ const modal = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
     alignItems: 'center',
   },
-  cancelTxt: { color: '#9fb8d0', fontWeight: '600' },
+  cancelTxt: { color: '#cccccc', fontWeight: '600' },
   saveBtn: {
     flex: 1,
     paddingVertical: 12,

@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Provider } = require('../models');
 
 async function getMe(req, res, next) {
   try {
@@ -9,7 +9,24 @@ async function getMe(req, res, next) {
       res.status(404);
       return next(new Error('User not found'));
     }
-    res.json(user);
+
+    let provider = null;
+    if (user.providerId) {
+      // providerId may be the Provider's code string or UUID
+      provider = await Provider.findOne({
+        where: { code: user.providerId },
+        attributes: ['id', 'code', 'name', 'xtreamUrl', 'xtreamUsername', 'xtreamPassword', 'm3uUrl'],
+      });
+      if (!provider) {
+        try {
+          provider = await Provider.findByPk(user.providerId, {
+            attributes: ['id', 'code', 'name', 'xtreamUrl', 'xtreamUsername', 'xtreamPassword', 'm3uUrl'],
+          });
+        } catch (_) {}
+      }
+    }
+
+    res.json({ ...user.toJSON(), provider: provider ? provider.toJSON() : null });
   } catch (err) {
     next(err);
   }

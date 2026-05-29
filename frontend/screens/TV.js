@@ -44,14 +44,14 @@ function TopNav({ navigation }) {
             style={[styles.navTab, t.id === 'live' && styles.navTabActive]}
             onPress={t.onPress}
           >
-            <Ionicons name={t.icon} size={15} color={t.id === 'live' ? '#e8f4ff' : '#5a7d9a'} style={{ marginRight: 6 }} />
+            <Ionicons name={t.icon} size={15} color={t.id === 'live' ? '#ffffff' : '#888888'} style={{ marginRight: 6 }} />
             <Text style={[styles.navTabTxt, t.id === 'live' && styles.navTabTxtActive]}>{t.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <TouchableOpacity style={styles.globalSearch} onPress={() => navigation.navigate('Search')}>
-        <Ionicons name="search-outline" size={14} color="#4a6a88" style={{ marginRight: 6 }} />
+        <Ionicons name="search-outline" size={14} color="#777777" style={{ marginRight: 6 }} />
         <Text style={styles.globalSearchTxt}>Search Global...</Text>
       </TouchableOpacity>
 
@@ -59,13 +59,13 @@ function TopNav({ navigation }) {
         style={styles.settingsBtn}
         onPress={() => navigation.navigate('Settings')}
       >
-        <Ionicons name="settings-outline" size={18} color="#7aaac8" />
+        <Ionicons name="settings-outline" size={18} color="#aaaaaa" />
       </TouchableOpacity>
 
       <View style={styles.logoWrap}>
         <Image source={FlameIcon} style={styles.navFlame} resizeMode="contain" />
         <Text style={styles.navLogoTxt}>
-          <Text style={{ color: '#e8f4ff' }}>GR81</Text>
+          <Text style={{ color: '#ffffff' }}>GR81</Text>
           <Text style={{ color: '#00b8cc' }}> AQUA</Text>
         </Text>
       </View>
@@ -108,7 +108,7 @@ function ChannelRow({ item, index, active, onPress, hasTVPreferredFocus }) {
       <Ionicons
         name="play-circle-outline"
         size={14}
-        color={active ? '#00b8cc' : '#3a5878'}
+        color={active ? '#00b8cc' : '#666666'}
         style={{ marginHorizontal: 7 }}
       />
       <Text style={[styles.channelName, active && styles.channelNameActive]} numberOfLines={1}>
@@ -127,23 +127,27 @@ export default function TV({ navigation }) {
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [catSearch, setCatSearch]     = useState('');
   const [loading, setLoading]         = useState(true);
+  const [fetchError, setFetchError]   = useState('');
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       setLoading(true);
+      setFetchError('');
       (async () => {
         try {
           const [cats, channels] = await Promise.all([
-            fetchLiveCategories().catch(() => []),
-            fetchLiveChannels({ limit: 3000 }).catch(() => []),
+            fetchLiveCategories(),
+            fetchLiveChannels({ limit: 3000 }),
           ]);
           if (!alive) return;
           setApiCats(Array.isArray(cats) ? cats : []);
           const arr = Array.isArray(channels) ? channels : [];
           setAllChannels(arr);
           if (arr.length && !selectedChannel) setSelectedChannel(arr[0]);
-        } catch {}
+        } catch (e) {
+          if (alive) setFetchError(e?.message || 'Failed to load channels');
+        }
         if (alive) setLoading(false);
       })();
       return () => { alive = false; };
@@ -201,7 +205,7 @@ export default function TV({ navigation }) {
             <TextInput
               style={styles.catSearchInput}
               placeholder="Search Categories"
-              placeholderTextColor="#3a5878"
+              placeholderTextColor="#666666"
               value={catSearch}
               onChangeText={setCatSearch}
               selectionColor="#00b8cc"
@@ -227,6 +231,19 @@ export default function TV({ navigation }) {
           {loading ? (
             <View style={styles.loadingBox}>
               <Text style={styles.loadingTxt}>Loading channels...</Text>
+            </View>
+          ) : fetchError ? (
+            <View style={styles.loadingBox}>
+              <Ionicons name="wifi-outline" size={36} color="#444444" style={{ marginBottom: 12 }} />
+              <Text style={[styles.loadingTxt, { textAlign: 'center', marginBottom: 16 }]}>
+                {fetchError.includes('playlist') ? 'No playlist configured' : 'Could not load channels'}
+              </Text>
+              <TouchableOpacity
+                style={styles.errorBtn}
+                onPress={() => navigation.navigate('Playlist')}
+              >
+                <Text style={styles.errorBtnTxt}>Configure Playlist</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <FlatList
@@ -292,7 +309,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   bg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(4,10,20,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.58)',
   },
 
   // ── Top nav ────────────────────────────────────────────────────
@@ -303,8 +320,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#0e2038',
-    backgroundColor: '#07101e',
+    borderBottomColor: '#222222',
+    backgroundColor: '#0a0a0a',
   },
   navTabs: {
     flexDirection: 'row',
@@ -317,34 +334,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1a3352',
-    backgroundColor: '#0a1828',
+    borderColor: '#2c2c2c',
+    backgroundColor: '#151515',
   },
   navTabActive: {
     borderColor: '#00b8cc',
-    backgroundColor: '#0a1c34',
+    backgroundColor: '#1e1e1e',
   },
   navTabTxt: {
-    color: '#5a7d9a',
+    color: '#888888',
     fontSize: 13,
     fontWeight: '600',
   },
   navTabTxtActive: {
-    color: '#e8f4ff',
+    color: '#ffffff',
   },
   globalSearch: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   globalSearchTxt: {
-    color: '#3a5878',
+    color: '#666666',
     fontSize: 13,
   },
   settingsBtn: {
@@ -352,8 +369,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1a3352',
-    backgroundColor: '#0a1828',
+    borderColor: '#2c2c2c',
+    backgroundColor: '#151515',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -383,17 +400,17 @@ const styles = StyleSheet.create({
   leftPanel: {
     width: 295,
     borderRightWidth: 1,
-    borderRightColor: '#0e2038',
+    borderRightColor: '#222222',
     paddingTop: 10,
     paddingHorizontal: 10,
-    backgroundColor: '#07101e',
+    backgroundColor: '#0a0a0a',
   },
   catSearchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -401,7 +418,7 @@ const styles = StyleSheet.create({
   },
   catSearchInput: {
     flex: 1,
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontSize: 13,
     padding: 0,
   },
@@ -418,37 +435,37 @@ const styles = StyleSheet.create({
   },
   catRowActive: {
     borderColor: '#00b8cc',
-    backgroundColor: '#0a1c34',
+    backgroundColor: '#1e1e1e',
   },
   catName: {
-    color: '#9fb8d0',
+    color: '#cccccc',
     fontSize: 13,
     flex: 1,
     marginRight: 8,
   },
   catNameActive: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontWeight: '600',
   },
   catCount: {
-    color: '#3a5878',
+    color: '#666666',
     fontSize: 12,
     fontWeight: '600',
     minWidth: 30,
     textAlign: 'right',
   },
   catCountActive: {
-    color: '#7aaac8',
+    color: '#aaaaaa',
   },
 
   // ── Middle: channels ────────────────────────────────────────────
   midPanel: {
     width: 310,
     borderRightWidth: 1,
-    borderRightColor: '#0e2038',
+    borderRightColor: '#222222',
     paddingTop: 10,
     paddingHorizontal: 8,
-    backgroundColor: '#070f1c',
+    backgroundColor: '#0a0a0a',
   },
   channelRow: {
     flexDirection: 'row',
@@ -462,31 +479,43 @@ const styles = StyleSheet.create({
   },
   channelRowActive: {
     borderColor: '#00b8cc',
-    backgroundColor: '#0a1c34',
+    backgroundColor: '#1e1e1e',
   },
   channelNum: {
-    color: '#3a5878',
+    color: '#666666',
     fontSize: 12,
     width: 24,
     textAlign: 'right',
   },
   channelName: {
     flex: 1,
-    color: '#9fb8d0',
+    color: '#cccccc',
     fontSize: 13,
   },
   channelNameActive: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontWeight: '600',
   },
   loadingBox: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   loadingTxt: {
-    color: '#3a5878',
+    color: '#666666',
     fontSize: 13,
+  },
+  errorBtn: {
+    backgroundColor: '#00b8cc',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  errorBtnTxt: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   // ── Right: preview ──────────────────────────────────────────────
@@ -504,7 +533,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#000',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     marginBottom: 12,
   },
 
@@ -538,7 +567,7 @@ const styles = StyleSheet.create({
 
   // Preview info
   previewChName: {
-    color: '#c0d8f0',
+    color: '#dddddd',
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 14,
@@ -552,15 +581,15 @@ const styles = StyleSheet.create({
     right: 16,
   },
   actionBtn: {
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   actionBtnTxt: {
-    color: '#9fb8d0',
+    color: '#cccccc',
     fontSize: 12,
     fontWeight: '600',
   },

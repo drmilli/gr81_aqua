@@ -8,8 +8,8 @@ function cleanBase(url) {
 
 async function getCreds() {
   const p = await getProfile();
-  if (!p?.baseUrl || !p?.username || !p?.password) throw new Error('Missing Xtream credentials');
-  return { baseUrl: cleanBase(p.baseUrl), username: p.username, password: p.password };
+  if (!p?.baseUrl || !p?.username) throw new Error('No active playlist selected');
+  return { baseUrl: cleanBase(p.baseUrl), username: p.username, password: p.password ?? '' };
 }
 
 const _cache = new Map();
@@ -91,7 +91,13 @@ export async function fetchVodItems({ categoryId, limit = 300 } = {}) {
     id: String(v.stream_id ?? v.id ?? v.name),
     title: v.name,
     posterUrl: v.stream_icon || null,
-    genre: v.category_id || 'VOD',
+    // list-level fields (present on some servers)
+    genre: v.genre || v.category_name || '',
+    year: v.year || '',
+    rating: v.rating || '',
+    plot: v.plot || v.description || '',
+    duration: v.duration || '',
+    category_id: v.category_id || '',
     stream_id: v.stream_id,
     container_extension: v.container_extension || 'mp4',
     type: 'vod',

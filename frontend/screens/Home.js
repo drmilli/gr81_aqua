@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, Image, StyleSheet, TouchableOpacity,
-  ImageBackground, Platform,
+  ImageBackground, Platform, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { fetchVodItems, fetchLiveChannels } from '../services/provider';
+import { fetchVodItems, fetchLiveChannels, fetchVodInfo } from '../services/provider';
 import { getProfile } from '../services/session';
 import * as mylist from '../services/mylist';
 import LogoImg from '../assets/public/logo.png';
@@ -40,7 +40,7 @@ function SidebarItem({ label, iconName, active, onPress, hasTVPreferredFocus }) 
       <Ionicons
         name={iconName}
         size={19}
-        color={active ? '#e8f4ff' : '#5a7d9a'}
+        color={active ? '#ffffff' : '#888888'}
         style={styles.menuIcon}
       />
       <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>
@@ -55,6 +55,7 @@ function SidebarItem({ label, iconName, active, onPress, hasTVPreferredFocus }) 
 export default function Home({ navigation }) {
   const [now, setNow] = useState(new Date());
   const [featured, setFeatured] = useState(null);
+  const [featuredInfo, setFeaturedInfo] = useState(null);
   const [activeMenu, setActiveMenu] = useState('live');
 
   // Live clock — update every 30s
@@ -82,6 +83,13 @@ export default function Home({ navigation }) {
           const pool = withImage.length ? withImage : arr;
           const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 8))] || null;
           setFeatured(pick);
+          setFeaturedInfo(null);
+
+          // Fetch rich metadata for VOD featured items
+          if (pick?.stream_id && pick?.type === 'vod') {
+            const info = await fetchVodInfo(pick.stream_id).catch(() => null);
+            if (alive && info) setFeaturedInfo(info);
+          }
         } catch {}
       })();
       return () => { alive = false; };
@@ -116,13 +124,18 @@ export default function Home({ navigation }) {
     },
   ];
 
-  // Featured metadata
-  const backdropUri = featured?.posterUrl || featured?.logoUrl || null;
+  // Featured metadata — prefer rich info from fetchVodInfo, fall back to list-level fields
+  const backdropUri =
+    (Array.isArray(featuredInfo?.backdrop_path) ? featuredInfo.backdrop_path[0] : featuredInfo?.backdrop_path) ||
+    featuredInfo?.cover_big || featuredInfo?.movie_image ||
+    featured?.posterUrl || featured?.logoUrl || null;
+  const posterUri = featuredInfo?.cover_big || featuredInfo?.movie_image || featured?.posterUrl || featured?.logoUrl || null;
   const featuredTitle = featured?.title || featured?.name || '';
-  const featuredDesc = featured?.description || featured?.plot || '';
-  const featuredGenre = featured?.genre || featured?.category || '';
-  const featuredYear = featured?.year ? String(featured.year) : '';
-  const featuredDuration = featured?.duration || featured?.runtime || '';
+  const featuredDesc = featuredInfo?.plot || featuredInfo?.description || featured?.plot || featured?.description || '';
+  const featuredGenre = featuredInfo?.genre || featured?.genre || '';
+  const featuredYear = String(featuredInfo?.releasedate || featured?.year || '').slice(0, 4);
+  const featuredDuration = featuredInfo?.duration || featured?.duration || featured?.runtime || '';
+  const featuredRating = featuredInfo?.rating ? `★ ${parseFloat(featuredInfo.rating).toFixed(1)}` : '';
 
   return (
     <View style={styles.root}>
@@ -147,7 +160,7 @@ export default function Home({ navigation }) {
 
         {/* Clock */}
         <View style={styles.clockBox}>
-          <Ionicons name="time-outline" size={17} color="#7aaac8" style={{ marginRight: 10 }} />
+          <Ionicons name="time-outline" size={17} color="#aaaaaa" style={{ marginRight: 10 }} />
           <View>
             <Text style={styles.clockTime}>{formatTime(now)}</Text>
             <Text style={styles.clockDate}>{formatDate(now)}</Text>
@@ -155,7 +168,7 @@ export default function Home({ navigation }) {
         </View>
 
         {/* Nav items */}
-        <View style={styles.menu}>
+        <ScrollView style={styles.menu} showsVerticalScrollIndicator={false}>
           {menuItems.map((item, i) => (
             <SidebarItem
               key={item.id}
@@ -166,7 +179,7 @@ export default function Home({ navigation }) {
               hasTVPreferredFocus={Platform.isTV && i === 0}
             />
           ))}
-        </View>
+        </ScrollView>
 
         {/* Settings + Refresh */}
         <View style={styles.sidebarBottom}>
@@ -174,14 +187,14 @@ export default function Home({ navigation }) {
             style={styles.bottomBtn}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Ionicons name="settings-outline" size={17} color="#7aaac8" />
+            <Ionicons name="settings-outline" size={17} color="#aaaaaa" />
             <Text style={styles.bottomBtnTxt}>Settings</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.bottomBtn}
             onPress={() => setNow(new Date())}
           >
-            <Ionicons name="refresh-outline" size={17} color="#7aaac8" />
+            <Ionicons name="refresh-outline" size={17} color="#aaaaaa" />
             <Text style={styles.bottomBtnTxt}>Refresh</Text>
           </TouchableOpacity>
         </View>
@@ -198,7 +211,7 @@ export default function Home({ navigation }) {
             onPress={() => navigation.navigate('Search')}
             activeOpacity={0.8}
           >
-            <Ionicons name="search-outline" size={15} color="#5a7d9a" style={{ marginRight: 8 }} />
+            <Ionicons name="search-outline" size={15} color="#888888" style={{ marginRight: 8 }} />
             <Text style={styles.searchPlaceholder}>
               Search movies, TV shows, live TV and more....
             </Text>
@@ -211,12 +224,15 @@ export default function Home({ navigation }) {
           <View style={styles.featuredCard}>
             {/* Info side */}
             <View style={styles.featuredInfo}>
-              <Text style={styles.featuredTitle}>{featuredTitle}</Text>
+              <Text style={styles.featuredTitle} numberOfLines={2}>{featuredTitle}</Text>
+
               {!!featuredDesc && (
-                <Text style={styles.featuredDesc} numberOfLines={6}>
+                <Text style={styles.featuredDesc} numberOfLines={4}>
                   {featuredDesc}
                 </Text>
               )}
+
+              {/* Tags row */}
               <View style={styles.tagsRow}>
                 {!!featuredGenre && (
                   <View style={styles.tagPrimary}>
@@ -229,16 +245,29 @@ export default function Home({ navigation }) {
                 {!!featuredDuration && (
                   <Text style={styles.tagPlain}>{featuredDuration}</Text>
                 )}
+                {!!featuredRating && (
+                  <Text style={styles.tagRating}>{featuredRating}</Text>
+                )}
                 <View style={styles.tagOutline}>
                   <Text style={styles.tagOutlineTxt}>HD</Text>
                 </View>
               </View>
+
+              {/* Play button */}
+              <TouchableOpacity
+                style={styles.playBtn}
+                onPress={() => featured && navigation.navigate('MovieDetail', { movie: featured })}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="play" size={14} color="#000" style={{ marginRight: 6 }} />
+                <Text style={styles.playBtnTxt}>Watch Now</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Poster thumbnail */}
-            {!!backdropUri && (
+            {!!(posterUri || backdropUri) && (
               <Image
-                source={{ uri: backdropUri }}
+                source={{ uri: posterUri || backdropUri }}
                 style={styles.featuredPoster}
                 resizeMode="cover"
               />
@@ -252,7 +281,7 @@ export default function Home({ navigation }) {
             style={styles.planBadge}
             onPress={() => navigation.navigate('Playlist')}
           >
-            <Ionicons name="calendar-outline" size={13} color="#7aaac8" style={{ marginRight: 6 }} />
+            <Ionicons name="calendar-outline" size={13} color="#aaaaaa" style={{ marginRight: 6 }} />
             <Text style={styles.planTxt}>
               Plan expires on:{' '}
               <Text style={styles.planDate}>30 May 2027</Text>
@@ -260,7 +289,7 @@ export default function Home({ navigation }) {
           </TouchableOpacity>
 
           <View style={styles.versionBadge}>
-            <Ionicons name="mail-outline" size={13} color="#7aaac8" style={{ marginRight: 5 }} />
+            <Ionicons name="mail-outline" size={13} color="#aaaaaa" style={{ marginRight: 5 }} />
             <Text style={styles.versionTxt}>v1.0</Text>
           </View>
         </View>
@@ -279,22 +308,22 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#060e1a',
+    backgroundColor: '#0a0a0a',
   },
 
   // Backdrop overlay
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(4, 10, 22, 0.72)',
+    backgroundColor: 'rgba(0, 0, 0, 0.58)',
   },
 
   // ── Sidebar ──────────────────────────────────────────────────────
   sidebar: {
     width: SIDEBAR_W,
+    flexShrink: 0,
     paddingTop: 20,
     paddingBottom: 16,
     paddingHorizontal: 14,
-    justifyContent: 'space-between',
     zIndex: 2,
   },
 
@@ -303,21 +332,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: 'rgba(8,20,38,0.6)',
+    backgroundColor: 'rgba(18,18,18,0.75)',
     marginBottom: 18,
   },
   clockTime: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   clockDate: {
-    color: '#5a7d9a',
+    color: '#aaaaaa',
     fontSize: 11,
     marginTop: 1,
   },
@@ -325,7 +354,6 @@ const styles = StyleSheet.create({
   // Menu
   menu: {
     flex: 1,
-    gap: 4,
   },
   menuItem: {
     flexDirection: 'row',
@@ -333,14 +361,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 13,
     paddingHorizontal: 14,
-    backgroundColor: 'rgba(8,20,38,0.5)',
+    backgroundColor: 'rgba(18,18,18,0.5)',
     borderWidth: 1,
     borderColor: 'transparent',
     overflow: 'hidden',
+    marginBottom: 4,
   },
   menuItemActive: {
-    backgroundColor: 'rgba(14,36,68,0.85)',
-    borderColor: '#1e3d5c',
+    backgroundColor: 'rgba(35,35,35,0.9)',
+    borderColor: '#3a3a3a',
   },
   activeBar: {
     position: 'absolute',
@@ -359,12 +388,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   menuLabel: {
-    color: '#5a7d9a',
+    color: '#aaaaaa',
     fontSize: 14,
     fontWeight: '500',
   },
   menuLabelActive: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontWeight: '700',
   },
 
@@ -382,12 +411,12 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: 'rgba(8,20,38,0.5)',
+    backgroundColor: 'rgba(18,18,18,0.5)',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
   },
   bottomBtnTxt: {
-    color: '#7aaac8',
+    color: '#aaaaaa',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -413,15 +442,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(8,20,38,0.7)',
+    backgroundColor: 'rgba(18,18,18,0.75)',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
     borderRadius: 30,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
   searchPlaceholder: {
-    color: '#4a6a88',
+    color: '#888888',
     fontSize: 13,
   },
   headerLogo: {
@@ -433,10 +462,10 @@ const styles = StyleSheet.create({
   featuredCard: {
     flexDirection: 'row',
     alignSelf: 'center',
-    backgroundColor: 'rgba(8,18,36,0.82)',
+    backgroundColor: 'rgba(15,15,15,0.88)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     padding: 22,
     gap: 20,
     maxWidth: 580,
@@ -446,15 +475,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featuredTitle: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 10,
     textDecorationLine: 'underline',
-    textDecorationColor: '#1e5cb0',
+    textDecorationColor: '#00b8cc',
   },
   featuredDesc: {
-    color: '#9fb8d0',
+    color: '#cccccc',
     fontSize: 12,
     lineHeight: 18,
     marginBottom: 14,
@@ -478,26 +507,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tagPlain: {
-    color: '#9fb8d0',
+    color: '#aaaaaa',
     fontSize: 12,
+  },
+  tagRating: {
+    color: '#f5c518',
+    fontSize: 12,
+    fontWeight: '700',
   },
   tagOutline: {
     borderWidth: 1,
-    borderColor: '#9fb8d0',
+    borderColor: '#666666',
     borderRadius: 4,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
   tagOutlineTxt: {
-    color: '#9fb8d0',
+    color: '#aaaaaa',
     fontSize: 11,
     fontWeight: '600',
   },
+  playBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#00b8cc',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    marginTop: 14,
+  },
+  playBtnTxt: {
+    color: '#000',
+    fontWeight: '800',
+    fontSize: 13,
+  },
   featuredPoster: {
     width: 130,
-    height: 170,
+    height: 185,
     borderRadius: 8,
-    backgroundColor: '#0a1e38',
+    backgroundColor: '#1a1a1a',
   },
 
   // Status bar
@@ -509,15 +558,15 @@ const styles = StyleSheet.create({
   planBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(8,20,38,0.7)',
+    backgroundColor: 'rgba(18,18,18,0.75)',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   planTxt: {
-    color: '#7aaac8',
+    color: '#aaaaaa',
     fontSize: 12,
   },
   planDate: {
@@ -529,15 +578,15 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(8,20,38,0.7)',
+    backgroundColor: 'rgba(18,18,18,0.75)',
     borderWidth: 1,
-    borderColor: '#1e3d5c',
+    borderColor: '#2c2c2c',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
   versionTxt: {
-    color: '#7aaac8',
+    color: '#aaaaaa',
     fontSize: 12,
     fontWeight: '600',
   },

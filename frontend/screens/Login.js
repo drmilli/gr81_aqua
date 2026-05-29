@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Image, ActivityIndicator, Platform, KeyboardAvoidingView, ImageBackground,
 } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { setToken, applyServerProvider } from '../services/session';
 import Logo from '../assets/public/logo.png';
 import BG from '../assets/public/GR81_AQUA_bg.png';
 import api from '../config/api';
@@ -21,9 +21,9 @@ export default function Login({ navigation }) {
       setSubmitting(true);
       setError('');
       const res = await api.post('/auth/login', { username: username.trim(), password });
-      const { token, user } = res.data;
-      await SecureStore.setItemAsync('gr81aqua_token_v1', token);
-      await SecureStore.setItemAsync('gr81aqua_user_v1', JSON.stringify(user));
+      const { token } = res.data;
+      await setToken(token);
+      await applyServerProvider(token);
       navigation.replace('Main');
     } catch (e) {
       const msg = e?.response?.data?.message || e?.response?.data?.errors?.[0]?.msg || e?.message || 'Login failed';
@@ -43,7 +43,7 @@ export default function Login({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Username"
-            placeholderTextColor="#4a7090"
+            placeholderTextColor="#7aaac8"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -53,7 +53,7 @@ export default function Login({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#4a7090"
+            placeholderTextColor="#7aaac8"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -87,37 +87,37 @@ const styles = StyleSheet.create({
   root:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
   card: {
-    width: 380,
-    backgroundColor: 'rgba(12,30,56,0.85)',
-    borderRadius: 18,
-    paddingHorizontal: 36,
-    paddingVertical: 36,
+    width: 400,
+    backgroundColor: 'rgba(6, 16, 38, 0.96)',
+    borderRadius: 20,
+    paddingHorizontal: 40,
+    paddingVertical: 40,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#17304e',
+    borderColor: '#1e4a6e',
   },
   logo:   { width: 160, height: 70, marginBottom: 28 },
   input: {
     width: '100%',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e3d5c',
+    borderBottomColor: '#2a5070',
     color: '#e8f4ff',
     fontSize: 15,
-    paddingVertical: 11,
+    paddingVertical: 13,
     paddingHorizontal: 2,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   btn: {
     width: '100%',
     backgroundColor: '#00b8cc',
     borderRadius: 30,
-    paddingVertical: 14,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    minHeight: 48,
+    marginTop: 12,
+    minHeight: 56,
   },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#fff', fontWeight: '800', fontSize: 14, letterSpacing: 1.8 },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 2 },
   error:   { color: '#ff6b6b', fontSize: 12, marginBottom: 10, textAlign: 'center', width: '100%' },
 });

@@ -51,15 +51,17 @@ const NUM_COLS = 4;
 function SettingsModal({ title, visible, onClose, children }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={m.backdrop} onPress={onClose} />
-      <View style={m.card}>
-        <View style={m.cardHeader}>
-          <Text style={m.cardTitle}>{title}</Text>
-          <TouchableOpacity onPress={onClose} style={m.closeBtn}>
-            <Ionicons name="close" size={20} color="#9fb8d0" />
-          </TouchableOpacity>
+      <View style={m.centeredView}>
+        <Pressable style={m.backdrop} onPress={onClose} />
+        <View style={m.card}>
+          <View style={m.cardHeader}>
+            <Text style={m.cardTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose} style={m.closeBtn}>
+              <Ionicons name="close" size={20} color="#cccccc" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView>
       </View>
     </Modal>
   );
@@ -127,49 +129,53 @@ export default function Settings({ navigation }) {
     <ImageBackground source={BG} style={styles.root} resizeMode="cover">
       <View style={styles.overlay} />
 
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-undo-outline" size={22} color="#e8f4ff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
-      </View>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
 
-      {/* ── Grid ── */}
-      <FlatList
-        data={TILES}
-        keyExtractor={t => t.id}
-        numColumns={NUM_COLS}
-        scrollEnabled={false}
-        contentContainerStyle={styles.grid}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.tile, activeTile === item.id && styles.tileActive]}
-            onPress={() => handleTile(item.id)}
-            activeOpacity={0.75}
-          >
-            <Ionicons
-              name={item.icon}
-              size={20}
-              color={activeTile === item.id ? '#00b8cc' : '#5a7d9a'}
-              style={{ marginRight: 12 }}
-            />
-            <Text style={[styles.tileLabel, activeTile === item.id && styles.tileLabelActive]}>
-              {item.label}
-            </Text>
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-undo-outline" size={22} color="#ffffff" />
           </TouchableOpacity>
-        )}
-      />
+          <Text style={styles.title}>Settings</Text>
+        </View>
 
-      {/* ── Bottom info bar ── */}
-      <View style={styles.infoBar}>
-        <Ionicons name="git-network-outline" size={14} color="#5a7d9a" style={{ marginRight: 6 }} />
-        <Text style={styles.infoTxt}>MAC Address: <Text style={styles.infoVal}>{macAddress}</Text></Text>
-        <View style={styles.infoDivider} />
-        <Ionicons name="key-outline" size={14} color="#5a7d9a" style={{ marginRight: 6 }} />
-        <Text style={styles.infoTxt}>Device Key: <Text style={styles.infoVal}>{deviceKey}</Text></Text>
-      </View>
+        {/* ── Grid ── */}
+        <FlatList
+          data={TILES}
+          keyExtractor={t => t.id}
+          numColumns={NUM_COLS}
+          scrollEnabled={false}
+          contentContainerStyle={styles.grid}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.tile, activeTile === item.id && styles.tileActive]}
+              onPress={() => handleTile(item.id)}
+              activeOpacity={0.75}
+            >
+              <Ionicons
+                name={item.icon}
+                size={20}
+                color={activeTile === item.id ? '#00b8cc' : '#888888'}
+                style={{ marginRight: 12 }}
+              />
+              <Text style={[styles.tileLabel, activeTile === item.id && styles.tileLabelActive]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* ── Bottom info bar ── */}
+        <View style={styles.infoBar}>
+          <Ionicons name="git-network-outline" size={14} color="#888888" style={{ marginRight: 6 }} />
+          <Text style={styles.infoTxt}>MAC Address: <Text style={styles.infoVal}>{macAddress}</Text></Text>
+          <View style={styles.infoDivider} />
+          <Ionicons name="key-outline" size={14} color="#888888" style={{ marginRight: 6 }} />
+          <Text style={styles.infoTxt}>Device Key: <Text style={styles.infoVal}>{deviceKey}</Text></Text>
+        </View>
+
+      </ScrollView>
 
       {/* ══ MODALS ══════════════════════════════════════════════ */}
 
@@ -185,8 +191,8 @@ export default function Settings({ navigation }) {
         </View>
         {settings.parentalEnabled && (
           <>
-            <TextInput style={m.input} placeholder="Set PIN (4 digits)" placeholderTextColor="#3a5878" value={pin} onChangeText={setPin} keyboardType="numeric" maxLength={4} secureTextEntry selectionColor="#00b8cc" />
-            <TextInput style={m.input} placeholder="Confirm PIN" placeholderTextColor="#3a5878" value={pinConfirm} onChangeText={setPinConfirm} keyboardType="numeric" maxLength={4} secureTextEntry selectionColor="#00b8cc" />
+            <TextInput style={m.input} placeholder="Set PIN (4 digits)" placeholderTextColor="#666666" value={pin} onChangeText={setPin} keyboardType="numeric" maxLength={4} secureTextEntry selectionColor="#00b8cc" />
+            <TextInput style={m.input} placeholder="Confirm PIN" placeholderTextColor="#666666" value={pinConfirm} onChangeText={setPinConfirm} keyboardType="numeric" maxLength={4} secureTextEntry selectionColor="#00b8cc" />
             <TouchableOpacity style={m.saveBtn} onPress={() => { if (pin === pinConfirm && pin.length === 4) { update({ parentalPin: pin }); close(); } }}>
               <Text style={m.saveTxt}>Save PIN</Text>
             </TouchableOpacity>
@@ -353,7 +359,7 @@ export default function Settings({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.68)' },
 
   // Header
   header: {
@@ -369,12 +375,12 @@ const styles = StyleSheet.create({
     left: 16,
     width: 40, height: 40,
     borderRadius: 20,
-    backgroundColor: '#0a1828',
-    borderWidth: 1, borderColor: '#1a3352',
+    backgroundColor: '#151515',
+    borderWidth: 1, borderColor: '#2c2c2c',
     alignItems: 'center', justifyContent: 'center',
   },
   title: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -391,25 +397,25 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 18,
   },
   tileActive: {
     borderColor: '#00b8cc',
-    backgroundColor: '#0a1c34',
+    backgroundColor: '#1e1e1e',
   },
   tileLabel: {
-    color: '#7aaac8',
+    color: '#aaaaaa',
     fontSize: 12,
     fontWeight: '500',
     flexShrink: 1,
   },
   tileLabelActive: {
-    color: '#e8f4ff',
+    color: '#ffffff',
     fontWeight: '600',
   },
 
@@ -418,9 +424,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0a1828',
+    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#1a3352',
+    borderColor: '#2c2c2c',
     borderRadius: 30,
     alignSelf: 'center',
     paddingHorizontal: 20,
@@ -429,28 +435,30 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 6,
   },
-  infoTxt: { color: '#5a7d9a', fontSize: 12 },
-  infoVal: { color: '#7aaac8', fontWeight: '600' },
-  infoDivider: { width: 1, height: 14, backgroundColor: '#1a3352', marginHorizontal: 10 },
+  infoTxt: { color: '#888888', fontSize: 12 },
+  infoVal: { color: '#aaaaaa', fontWeight: '600' },
+  infoDivider: { width: 1, height: 14, backgroundColor: '#2c2c2c', marginHorizontal: 10 },
 });
 
 // ── Modal styles ──────────────────────────────────────────────────────────────
 
 const m = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   card: {
-    position: 'absolute',
-    top: '50%', left: '50%',
-    transform: [{ translateX: -190 }, { translateY: -200 }],
     width: 380,
     maxHeight: 420,
-    backgroundColor: '#0c1e38',
+    backgroundColor: '#151515',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#17304e',
+    borderColor: '#2c2c2c',
     overflow: 'hidden',
   },
   cardHeader: {
@@ -461,9 +469,9 @@ const m = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#0e2038',
+    borderBottomColor: '#222222',
   },
-  cardTitle: { color: '#e8f4ff', fontSize: 15, fontWeight: '700' },
+  cardTitle: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
   closeBtn: { padding: 4 },
 
   // Content
@@ -474,14 +482,14 @@ const m = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#0e2038',
+    borderBottomColor: '#222222',
   },
-  label: { color: '#9fb8d0', fontSize: 13 },
-  hint: { color: '#3a5878', fontSize: 12, paddingHorizontal: 20, paddingVertical: 12 },
+  label: { color: '#cccccc', fontSize: 13 },
+  hint: { color: '#666666', fontSize: 12, paddingHorizontal: 20, paddingVertical: 12 },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: '#1e3d5c',
-    color: '#e8f4ff',
+    borderBottomColor: '#2c2c2c',
+    color: '#ffffff',
     fontSize: 14,
     paddingVertical: 10,
     marginHorizontal: 20,
@@ -504,8 +512,8 @@ const m = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#0e2038',
+    borderBottomColor: '#222222',
   },
-  optLabel:       { color: '#9fb8d0', fontSize: 13 },
-  optLabelActive: { color: '#e8f4ff', fontWeight: '700' },
+  optLabel:       { color: '#cccccc', fontSize: 13 },
+  optLabelActive: { color: '#ffffff', fontWeight: '700' },
 });

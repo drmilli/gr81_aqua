@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Image, ActivityIndicator, ImageBackground } from 'react-native';
 import Logo from '../assets/public/logo.png';
 import BG from '../assets/public/GR81_AQUA_bg.png';
-import { getLoggedOut, getProfile } from '../services/session';
+import { getLoggedOut, getProfile, getToken, applyServerProvider } from '../services/session';
 import { applyProfile, getActiveProfileId, getProfiles } from '../services/profiles';
 import { getLicenseStatus } from '../services/licensing';
 
@@ -25,6 +25,12 @@ export default function Onboarding({ navigation }) {
           const pick = active && list.some(x => x.id === active) ? active : list[0].id;
           const ok = await applyProfile(pick);
           if (ok) { navigation.replace('Main'); return; }
+        }
+        const token = await getToken();
+        if (token) {
+          await applyServerProvider(token);
+          navigation.replace('Main');
+          return;
         }
       } catch {}
       navigation.replace('Login');

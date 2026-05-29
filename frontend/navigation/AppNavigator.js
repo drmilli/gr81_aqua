@@ -24,10 +24,10 @@ function Tabs() {
   return (
     <Tab.Navigator
       initialRouteName={Platform.isTV ? 'TV' : 'Home'}
+      tabBar={() => null}
+      sceneContainerStyle={{ flex: 1, paddingBottom: 0 }}
       screenOptions={{
         headerShown: false,
-        // Hide tab bar on TV — top nav handles navigation there
-        tabBarStyle: Platform.isTV ? { display: 'none' } : { display: 'none' },
       }}
     >
       <Tab.Screen name="Home"   component={Home} />
@@ -44,7 +44,7 @@ export default function AppNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#060e1a' },
+        contentStyle: { flex: 1, backgroundColor: '#060e1a' },
         gestureEnabled: !Platform.isTV,
       }}
     >

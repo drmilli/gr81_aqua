@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer, DefaultTheme, createNavigationContainerRef } from '@react-navigation/native';
-import { AppState, StatusBar, View } from 'react-native';
+import { AppState, StatusBar, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import theme from './theme';

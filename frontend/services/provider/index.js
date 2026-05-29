@@ -5,8 +5,8 @@ import * as m3u from './m3u';
 
 const getAdapter = async () => {
   const profile = await getProfile();
-  if (!profile) throw new Error('No active playlist selected');
-  const type = profile?.type || 'm3u';
+  if (!profile || (!profile.type)) throw new Error('No active playlist selected');
+  const type = profile.type || 'm3u';
   switch (type) {
     case 'xtream':
       return xtream;
