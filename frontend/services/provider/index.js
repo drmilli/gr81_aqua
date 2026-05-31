@@ -69,7 +69,17 @@ export async function fetchVodInfo(vodId) {
   return adapter.fetchVodInfo?.(vodId) || null;
 }
 
+export async function fetchSeriesInfo(seriesId) {
+  const adapter = await getAdapter();
+  return adapter.fetchSeriesInfo?.(seriesId) || null;
+}
+
 export async function getAccountInfo() {
   const adapter = await getAdapter();
   return adapter.getAccountInfo?.() || null;
+}
+
+export async function clearCache() {
+  const adapter = await getAdapter();
+  adapter.clearCache?.();
 }

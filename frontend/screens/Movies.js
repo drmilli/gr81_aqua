@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchVodCategories, fetchVodItems } from '../services/provider';
+import * as mylist from '../services/mylist';
 import FlameIcon from '../assets/public/icon.png';
 import BG from '../assets/public/GR81_AQUA_bg.png';
 
@@ -143,6 +144,7 @@ export default function Movies({ navigation }) {
 
   const [allItems, setAllItems]           = useState([]);
   const [apiCats, setApiCats]             = useState([]);
+  const [favIds, setFavIds]               = useState(new Set());
   const [selectedCatId, setSelectedCatId] = useState('__recent__');
   const [catSearch, setCatSearch]         = useState('');
   const [sortBy, setSortBy]               = useState('added');
@@ -157,13 +159,15 @@ export default function Movies({ navigation }) {
       setFetchError('');
       (async () => {
         try {
-          const [cats, items] = await Promise.all([
+          const [cats, items, favs] = await Promise.all([
             fetchVodCategories(),
             fetchVodItems({ limit: 1000 }),
+            mylist.getList().catch(() => []),
           ]);
           if (!alive) return;
           setApiCats(Array.isArray(cats) ? cats : []);
           setAllItems(Array.isArray(items) ? items : []);
+          setFavIds(new Set(Array.isArray(favs) ? favs : []));
         } catch (e) {
           if (alive) setFetchError(e?.message || 'Failed to load movies');
         }
@@ -183,18 +187,23 @@ export default function Movies({ navigation }) {
     return m;
   }, [allItems]);
 
+  const favCount = useMemo(
+    () => allItems.filter(i => favIds.has(i.id || i._id || i.title)).length,
+    [allItems, favIds]
+  );
+
   // Full category list
   const categories = useMemo(() => [
     { id: '__recent__', name: 'Recently Viewed', icon: 'time-outline',  count: 0 },
     { id: '__all__',    name: 'All',             icon: 'grid-outline',  count: allItems.length },
-    { id: '__fav__',    name: 'Favorite',        icon: 'heart-outline', count: 0 },
+    { id: '__fav__',    name: 'Favourite',       icon: 'heart-outline', count: favCount },
     ...apiCats.map(c => ({
       id:    String(c.id),
       name:  c.name,
       icon:  catIcon(c.name),
       count: countMap[String(c.id)] || 0,
     })),
-  ], [apiCats, allItems, countMap]);
+  ], [apiCats, allItems, countMap, favCount]);
 
   const visibleCats = useMemo(() => {
     const q = catSearch.trim().toLowerCase();
@@ -202,9 +211,11 @@ export default function Movies({ navigation }) {
   }, [categories, catSearch]);
 
   const filteredItems = useMemo(() => {
+    if (selectedCatId === '__fav__')
+      return allItems.filter(i => favIds.has(i.id || i._id || i.title));
     if (selectedCatId === '__all__' || selectedCatId.startsWith('__')) return allItems;
     return allItems.filter(i => String(i.genre || i.category || i.category_id || '') === selectedCatId);
-  }, [allItems, selectedCatId]);
+  }, [allItems, selectedCatId, favIds]);
 
   const sortedItems = useMemo(() => {
     const arr = [...filteredItems];

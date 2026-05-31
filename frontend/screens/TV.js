@@ -1,11 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   TextInput, Image, Platform, ScrollView, ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import { useEvent } from 'expo';
 import { fetchLiveChannels, fetchLiveCategories } from '../services/provider';
+import * as mylist from '../services/mylist';
 import FlameIcon from '../assets/public/icon.png';
 import BG from '../assets/public/GR81_AQUA_bg.png';
 
@@ -23,6 +26,47 @@ function NoSignal() {
         <Text style={styles.noSignalTxt}>No Signal</Text>
       </View>
     </View>
+  );
+}
+
+// ── Live channel preview (self-contained player lifecycle) ───────────────────
+
+function LivePreview({ channel, onPress }) {
+  const url = channel?.hlsUrl || channel?.url || null;
+  const [hasError, setHasError] = useState(false);
+
+  const player = useVideoPlayer(
+    url ? { uri: url, headers: { 'User-Agent': 'IPTVSmartersPlayer' } } : null,
+    p => { p.volume = 0; p.loop = true; }
+  );
+
+  const { status } = useEvent(player, 'statusChange', { status: 'idle' });
+
+  useEffect(() => {
+    if (status === 'readyToPlay') {
+      try { player.play(); } catch {}
+    } else if (status === 'error') {
+      setHasError(true);
+    }
+  }, [status]);
+
+  return (
+    <TouchableOpacity style={styles.previewArea} onPress={onPress} activeOpacity={0.85}>
+      {!hasError ? (
+        <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} />
+      ) : channel?.logoUrl ? (
+        <Image source={{ uri: channel.logoUrl }} style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} resizeMode="contain" />
+      ) : (
+        <NoSignal />
+      )}
+      <View style={styles.previewExpandBtn}>
+        <Ionicons name="expand-outline" size={18} color="rgba(255,255,255,0.85)" />
+      </View>
+      <View style={styles.previewLiveBadge}>
+        <View style={styles.previewLiveDot} />
+        <Text style={styles.previewLiveTxt}>LIVE</Text>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -186,7 +230,9 @@ export default function TV({ navigation }) {
     return allChannels.filter(ch => String(ch.category || ch.category_id || '') === selectedCatId);
   }, [allChannels, selectedCatId]);
 
-  const channelName = selectedChannel?.name || selectedChannel?.title || '';
+  const channelName     = selectedChannel?.name || selectedChannel?.title || '';
+  const channelCatName  = apiCats.find(c => String(c.id) === String(selectedChannel?.category))?.name || '';
+  const channelNumber   = selectedChannel ? allChannels.findIndex(c => c.id === selectedChannel.id) + 1 : 0;
 
   return (
     <ImageBackground source={BG} style={styles.root} resizeMode="cover">
@@ -266,36 +312,87 @@ export default function TV({ navigation }) {
         {/* ── Right: Preview + Info ── */}
         <View style={styles.rightPanel}>
           {/* Preview area */}
-          <TouchableOpacity
-            style={styles.previewArea}
-            onPress={() => selectedChannel && navigation.navigate('Play', { item: selectedChannel })}
-            activeOpacity={0.85}
-          >
-            <NoSignal />
-          </TouchableOpacity>
-
-          {/* Channel name */}
-          {!!channelName && (
-            <Text style={styles.previewChName} numberOfLines={2}>
-              {channelName}
-            </Text>
+          {selectedChannel ? (
+            <LivePreview
+              key={selectedChannel.id}
+              channel={selectedChannel}
+              onPress={() => navigation.navigate('Play', { item: selectedChannel })}
+            />
+          ) : (
+            <View style={styles.previewArea}>
+              <NoSignal />
+            </View>
           )}
 
-          {/* Actions */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionBtn}>
-              <Text style={styles.actionBtnTxt}>Catch up</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn}>
-              <Text style={styles.actionBtnTxt}>Add to Favorite</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => navigation.navigate('Search')}
-            >
-              <Text style={styles.actionBtnTxt}>Search</Text>
-            </TouchableOpacity>
-          </View>
+          {/* ── Channel info ── */}
+          {selectedChannel ? (
+            <View style={styles.chInfo}>
+              {/* Logo + name row */}
+              <View style={styles.chHeaderRow}>
+                {selectedChannel.logoUrl ? (
+                  <Image
+                    source={{ uri: selectedChannel.logoUrl }}
+                    style={styles.chLogo}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={[styles.chLogo, styles.chLogoFallback]}>
+                    <Ionicons name="tv-outline" size={20} color="#444444" />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.chName} numberOfLines={2}>{channelName}</Text>
+                  <View style={styles.chMetaRow}>
+                    {!!channelNumber && (
+                      <View style={styles.chNumBadge}>
+                        <Text style={styles.chNumTxt}>CH {channelNumber}</Text>
+                      </View>
+                    )}
+                    {!!channelCatName && (
+                      <View style={styles.chCatBadge}>
+                        <Text style={styles.chCatTxt}>{channelCatName}</Text>
+                      </View>
+                    )}
+                    <View style={styles.chLiveBadge}>
+                      <View style={styles.chLiveDot} />
+                      <Text style={styles.chLiveTxt}>LIVE</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Watch Now button */}
+              <TouchableOpacity
+                style={styles.watchBtn}
+                onPress={() => navigation.navigate('Play', { item: selectedChannel })}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="play" size={15} color="#000" style={{ marginRight: 8 }} />
+                <Text style={styles.watchBtnTxt}>Watch Now</Text>
+              </TouchableOpacity>
+
+              {/* Action row */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Ionicons name="time-outline" size={14} color="#aaaaaa" style={{ marginRight: 5 }} />
+                  <Text style={styles.actionBtnTxt}>Catch up</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Ionicons name="heart-outline" size={14} color="#aaaaaa" style={{ marginRight: 5 }} />
+                  <Text style={styles.actionBtnTxt}>Favourite</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Search')}>
+                  <Ionicons name="search-outline" size={14} color="#aaaaaa" style={{ marginRight: 5 }} />
+                  <Text style={styles.actionBtnTxt}>Search</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.chEmpty}>
+              <Ionicons name="tv-outline" size={28} color="#333333" style={{ marginBottom: 8 }} />
+              <Text style={styles.chEmptyTxt}>Select a channel to preview</Text>
+            </View>
+          )}
         </View>
 
       </View>
@@ -536,6 +633,34 @@ const styles = StyleSheet.create({
     borderColor: '#2c2c2c',
     marginBottom: 12,
   },
+  previewExpandBtn: {
+    position: 'absolute',
+    bottom: 8, right: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 6,
+    padding: 5,
+  },
+  previewLiveBadge: {
+    position: 'absolute',
+    top: 8, left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  previewLiveDot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: '#ff3b30',
+  },
+  previewLiveTxt: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 
   // No signal
   noSignalWrap: {
@@ -565,32 +690,135 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  // Preview info
-  previewChName: {
-    color: '#dddddd',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 14,
-    lineHeight: 18,
+  // ── Channel info card ─────────────────────────────────────────────────────
+  chInfo: {
+    flex: 1,
+    paddingTop: 14,
+    gap: 14,
+  },
+  chHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  chLogo: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: '#1a1a1a',
+    flexShrink: 0,
+  },
+  chLogoFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2c2c2c',
+  },
+  chName: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  chMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    alignItems: 'center',
+  },
+  chNumBadge: {
+    backgroundColor: '#1e1e1e',
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: '#2c2c2c',
+  },
+  chNumTxt: {
+    color: '#aaaaaa',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  chCatBadge: {
+    backgroundColor: 'rgba(0,184,204,0.1)',
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0,184,204,0.25)',
+  },
+  chCatTxt: {
+    color: '#00b8cc',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  chLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,59,48,0.12)',
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255,59,48,0.3)',
+  },
+  chLiveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#ff3b30',
+  },
+  chLiveTxt: {
+    color: '#ff3b30',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  watchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#00b8cc',
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  watchBtnTxt: {
+    color: '#000',
+    fontWeight: '800',
+    fontSize: 14,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
-    position: 'absolute',
-    bottom: 14,
-    right: 16,
+    gap: 6,
   },
   actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#151515',
     borderWidth: 1,
     borderColor: '#2c2c2c',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 9,
   },
   actionBtnTxt: {
-    color: '#cccccc',
-    fontSize: 12,
+    color: '#aaaaaa',
+    fontSize: 11,
     fontWeight: '600',
+  },
+  chEmpty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 20,
+  },
+  chEmptyTxt: {
+    color: '#444444',
+    fontSize: 12,
   },
 });

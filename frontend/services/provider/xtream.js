@@ -15,6 +15,8 @@ async function getCreds() {
 const _cache = new Map();
 const TTL = 5 * 60 * 1000;
 
+export function clearCache() { _cache.clear(); }
+
 async function callApi(action = '', extra = {}) {
   const { baseUrl, username, password } = await getCreds();
   let url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
@@ -141,6 +143,18 @@ export async function fetchVodInfo(vodId) {
   if (!vodId) return null;
   const data = await callApi('get_vod_info', { vod_id: String(vodId) });
   return data?.info || null;
+}
+
+export async function fetchSeriesInfo(seriesId) {
+  if (!seriesId) return null;
+  const data = await callApi('get_series_info', { series_id: String(seriesId) });
+  if (!data) return null;
+  // Normalise episodes: { "1": [...], "2": [...] } → same, but episodes may be missing
+  return {
+    info:     data.info     || {},
+    episodes: data.episodes || {},
+    seasons:  data.seasons  || {},
+  };
 }
 
 export async function getAccountInfo() {

@@ -60,6 +60,8 @@ export async function login(credentials) {
 
 let cache = { url: '', fetchedAt: 0, channels: [] };
 
+export function clearCache() { cache = { url: '', fetchedAt: 0, channels: [] }; }
+
 async function loadChannels() {
   const url = await getM3uUrl();
   const now = Date.now();
@@ -106,3 +108,4 @@ export async function fetchSeriesCategories() { return []; }
 export async function fetchSeriesItems() { return []; }
 export async function fetchEPG() { return []; }
 export async function fetchVodInfo() { return null; }
+export async function fetchSeriesInfo() { return null; }

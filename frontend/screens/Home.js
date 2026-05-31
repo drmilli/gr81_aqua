@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { fetchVodItems, fetchLiveChannels, fetchVodInfo } from '../services/provider';
+import { fetchVodItems, fetchLiveChannels, fetchVodInfo, clearCache } from '../services/provider';
 import { getProfile } from '../services/session';
 import * as mylist from '../services/mylist';
 import LogoImg from '../assets/public/logo.png';
@@ -64,37 +64,33 @@ export default function Home({ navigation }) {
     return () => clearInterval(t);
   }, []);
 
-  // Fetch featured content on focus
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      (async () => {
-        try {
-          const profile = await getProfile();
-          let items = [];
-          if (profile?.type === 'xtream') {
-            items = await fetchVodItems({ limit: 20 });
-          } else {
-            items = await fetchLiveChannels({ limit: 20 });
-          }
-          if (!alive) return;
-          const arr = Array.isArray(items) ? items : [];
-          const withImage = arr.filter(i => i?.posterUrl || i?.logoUrl);
-          const pool = withImage.length ? withImage : arr;
-          const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 8))] || null;
-          setFeatured(pick);
-          setFeaturedInfo(null);
+  const loadFeatured = useCallback(async () => {
+    try {
+      const profile = await getProfile();
+      let items = [];
+      if (profile?.type === 'xtream') {
+        items = await fetchVodItems({ limit: 20 });
+      } else {
+        items = await fetchLiveChannels({ limit: 20 });
+      }
+      const arr = Array.isArray(items) ? items : [];
+      const withImage = arr.filter(i => i?.posterUrl || i?.logoUrl);
+      const pool = withImage.length ? withImage : arr;
+      const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 8))] || null;
+      setFeatured(pick);
+      setFeaturedInfo(null);
+      if (pick?.stream_id && pick?.type === 'vod') {
+        const info = await fetchVodInfo(pick.stream_id).catch(() => null);
+        if (info) setFeaturedInfo(info);
+      }
+    } catch {}
+  }, []);
 
-          // Fetch rich metadata for VOD featured items
-          if (pick?.stream_id && pick?.type === 'vod') {
-            const info = await fetchVodInfo(pick.stream_id).catch(() => null);
-            if (alive && info) setFeaturedInfo(info);
-          }
-        } catch {}
-      })();
-      return () => { alive = false; };
-    }, [])
-  );
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    loadFeatured().finally(() => { if (!alive) { setFeatured(null); setFeaturedInfo(null); } });
+    return () => { alive = false; };
+  }, [loadFeatured]));
 
   // Sidebar menu definition
   const menuItems = [
@@ -192,7 +188,7 @@ export default function Home({ navigation }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.bottomBtn}
-            onPress={() => setNow(new Date())}
+            onPress={async () => { setNow(new Date()); await clearCache(); loadFeatured(); }}
           >
             <Ionicons name="refresh-outline" size={17} color="#aaaaaa" />
             <Text style={styles.bottomBtnTxt}>Refresh</Text>
