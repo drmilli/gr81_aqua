@@ -30,6 +30,7 @@ export default function PlayScreen({ route, navigation }) {
   const [recToast, setRecToast]           = useState(null);
   const [showDebug, setShowDebug]         = useState(false);
   const [durationSec, setDurationSec]     = useState(0);
+  const [retryKey, setRetryKey]           = useState(0);
 
   const candidatesRef       = useRef([]);
   const [candidateIdx, setCandidateIdx] = useState(0);
@@ -109,7 +110,7 @@ export default function PlayScreen({ route, navigation }) {
       if (active) handleError(e?.message || 'Load error');
     });
     return () => { active = false; };
-  }, [source]);
+  }, [source, retryKey]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -507,7 +508,14 @@ export default function PlayScreen({ route, navigation }) {
           <Text style={styles.errorTitle}>Playback Error</Text>
           <Text style={styles.errorMsg}>{error}</Text>
           <View style={styles.errorActions}>
-            <TouchableOpacity style={styles.errorBtnPrimary} onPress={() => { setError(''); setIsError(false); navigation.replace('Play', { item }); }}>
+            <TouchableOpacity style={styles.errorBtnPrimary} onPress={() => {
+              const url = candidatesRef.current[0] || source;
+              setError(''); setIsError(false); setIsLoaded(false);
+              setUseWebView(false); setCandidateIdx(0);
+              hasAutoPlayedRef.current = false;
+              setSource(url);
+              setRetryKey(k => k + 1);
+            }}>
               <Ionicons name="refresh" size={16} color="#000" style={{ marginRight: 8 }} />
               <Text style={styles.errorBtnPrimaryTxt}>Retry</Text>
             </TouchableOpacity>
